@@ -7,13 +7,32 @@ package com.example.flutter_passkey_service
 import android.util.Log
 import io.flutter.plugin.common.BasicMessageChannel
 import io.flutter.plugin.common.BinaryMessenger
-import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MessageCodec
-import io.flutter.plugin.common.StandardMethodCodec
 import io.flutter.plugin.common.StandardMessageCodec
+import kotlinx.serialization.Serializable
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 private object MessagesPigeonUtils {
+
+  fun wrapResult(result: Any?): List<Any?> {
+    return listOf(result)
+  }
+
+  fun wrapError(exception: Throwable): List<Any?> {
+    return if (exception is FlutterError) {
+      listOf(
+        exception.code,
+        exception.message,
+        exception.details
+      )
+    } else {
+      listOf(
+        exception.javaClass.simpleName,
+        exception.toString(),
+        "Cause: " + exception.cause + ", Stacktrace: " + Log.getStackTraceString(exception)
+      )
+    }
+  }
   fun deepEquals(a: Any?, b: Any?): Boolean {
     if (a is ByteArray && b is ByteArray) {
         return a.contentEquals(b)
@@ -58,12 +77,95 @@ class FlutterError (
   val details: Any? = null
 ) : Throwable()
 
+/** Predefined error types for consistent error handling across platforms */
+enum class PasskeyErrorType(val raw: Int) {
+  INVALID_PARAMETERS(0),
+  MISSING_REQUIRED_FIELD(1),
+  INVALID_FORMAT(2),
+  DECODING_CHALLENGE(3),
+  USER_CANCELLED(4),
+  USER_TIMEOUT(5),
+  USER_OPTED_OUT(6),
+  INSUFFICIENT_PERMISSIONS(7),
+  SECURITY_VIOLATION(8),
+  NOT_ALLOWED(9),
+  DOMAIN_NOT_ASSOCIATED(10),
+  NO_CREDENTIALS_AVAILABLE(11),
+  CREDENTIAL_NOT_FOUND(12),
+  INVALID_CREDENTIAL(13),
+  CREDENTIAL_ALREADY_EXISTS(14),
+  INVALID_RESPONSE(15),
+  NOT_HANDLED(16),
+  FAILED(17),
+  PLATFORM_NOT_SUPPORTED(18),
+  OPERATION_NOT_SUPPORTED(19),
+  SYSTEM_ERROR(20),
+  NETWORK_ERROR(21),
+  DOM_ERROR(22),
+  WEBAUTHN_ERROR(23),
+  ATTESTATION_ERROR(24),
+  EXCLUDE_CREDENTIALS_MATCH(25),
+  UNEXPECTED_AUTHORIZATION_RESPONSE(26),
+  WK_ERROR_DOMAIN(27),
+  UNKNOWN_ERROR(28),
+  UNEXPECTED_ERROR(29);
+
+  companion object {
+    fun ofRaw(raw: Int): PasskeyErrorType? {
+      return values().firstOrNull { it.raw == raw }
+    }
+  }
+}
+
+/**
+ * Represents a standardized passkey exception that can be thrown across platforms
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+@Serializable
+data class  PasskeyException (
+  /** Error type identifying the specific type of error */
+  val errorType: PasskeyErrorType,
+  /** Human-readable error message describing what went wrong */
+  val message: String,
+  /** Optional additional details about the error */
+  val details: String
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): PasskeyException {
+      val errorType = pigeonVar_list[0] as PasskeyErrorType
+      val message = pigeonVar_list[1] as String
+      val details = pigeonVar_list[2] as String
+      return PasskeyException(errorType, message, details)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      errorType,
+      message,
+      details,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other !is PasskeyException) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    return MessagesPigeonUtils.deepEquals(toList(), other.toList())  }
+
+  override fun hashCode(): Int = toList().hashCode()
+}
+
 /**
  * Represents the response data for authentication generation options
  *
  * Generated class from Pigeon that represents data sent in messages.
  */
-data class AuthGenerateOptionResponseData (
+@Serializable
+data class  AuthGenerateOptionResponseData (
   /** The relying party identifier */
   val rpId: String,
   /** The challenge string */
@@ -112,7 +214,8 @@ data class AuthGenerateOptionResponseData (
  *
  * Generated class from Pigeon that represents data sent in messages.
  */
-data class AuthGenerateOptionAllowCredential (
+@Serializable
+data class  AuthGenerateOptionAllowCredential (
   /** The credential identifier */
   val id: String,
   /** The credential type */
@@ -153,7 +256,8 @@ data class AuthGenerateOptionAllowCredential (
  *
  * Generated class from Pigeon that represents data sent in messages.
  */
-data class AuthVerifyResponse (
+@Serializable
+data class  AuthVerifyResponse (
   /** Whether the authentication was verified */
   val verified: Boolean,
   /** Access token for authenticated session */
@@ -198,7 +302,8 @@ data class AuthVerifyResponse (
  *
  * Generated class from Pigeon that represents data sent in messages.
  */
-data class User (
+@Serializable
+data class  User (
   /** User identifier */
   val id: String,
   /** Username */
@@ -243,7 +348,8 @@ data class User (
  *
  * Generated class from Pigeon that represents data sent in messages.
  */
-data class CreatePasskeyResponseData (
+@Serializable
+data class  CreatePasskeyResponseData (
   /** Raw identifier */
   val rawId: String,
   /** Authenticator attachment type */
@@ -300,7 +406,8 @@ data class CreatePasskeyResponseData (
  *
  * Generated class from Pigeon that represents data sent in messages.
  */
-data class CreatePasskeyResponse (
+@Serializable
+data class  CreatePasskeyResponse (
   /** Client data JSON */
   val clientDataJSON: String,
   /** Attestation object */
@@ -353,7 +460,8 @@ data class CreatePasskeyResponse (
  *
  * Generated class from Pigeon that represents data sent in messages.
  */
-data class CreatePasskeyExtension (
+@Serializable
+data class  CreatePasskeyExtension (
   /** Credential properties extension (optional) */
   val credProps: CreatePasskeyExtensionProps? = null,
   /** PRF extension (optional) */
@@ -390,7 +498,8 @@ data class CreatePasskeyExtension (
  *
  * Generated class from Pigeon that represents data sent in messages.
  */
-data class CreatePasskeyExtensionPrf (
+@Serializable
+data class  CreatePasskeyExtensionPrf (
   /** Enabled flag */
   val rk: Boolean
 )
@@ -423,7 +532,8 @@ data class CreatePasskeyExtensionPrf (
  *
  * Generated class from Pigeon that represents data sent in messages.
  */
-data class CreatePasskeyExtensionProps (
+@Serializable
+data class  CreatePasskeyExtensionProps (
   /** Resident key flag */
   val rk: Boolean
 )
@@ -456,7 +566,8 @@ data class CreatePasskeyExtensionProps (
  *
  * Generated class from Pigeon that represents data sent in messages.
  */
-data class GetPasskeyAuthenticationResponseData (
+@Serializable
+data class  GetPasskeyAuthenticationResponseData (
   /** Authenticator attachment type */
   val authenticatorAttachment: String,
   /** Credential identifier */
@@ -509,7 +620,8 @@ data class GetPasskeyAuthenticationResponseData (
  *
  * Generated class from Pigeon that represents data sent in messages.
  */
-data class GetPasskeyAuthenticationResponse (
+@Serializable
+data class  GetPasskeyAuthenticationResponse (
   /** Client data JSON */
   val clientDataJSON: String,
   /** Authenticator data */
@@ -554,6 +666,7 @@ data class GetPasskeyAuthenticationResponse (
  *
  * Generated class from Pigeon that represents data sent in messages.
  */
+@Serializable
 data class RegisterGenerateOptionData (
   /** Challenge string */
   val challenge: String,
@@ -619,7 +732,8 @@ data class RegisterGenerateOptionData (
  *
  * Generated class from Pigeon that represents data sent in messages.
  */
-data class RegisterGenerateOptionExcludeCredential (
+@Serializable
+data class  RegisterGenerateOptionExcludeCredential (
   /** Credential identifier */
   val id: String,
   /** Credential type */
@@ -660,7 +774,8 @@ data class RegisterGenerateOptionExcludeCredential (
  *
  * Generated class from Pigeon that represents data sent in messages.
  */
-data class RegisterGenerateOptionRp (
+@Serializable
+data class  RegisterGenerateOptionRp (
   /** Relying party name */
   val name: String,
   /** Relying party identifier */
@@ -697,7 +812,8 @@ data class RegisterGenerateOptionRp (
  *
  * Generated class from Pigeon that represents data sent in messages.
  */
-data class RegisterGenerateOptionUser (
+@Serializable
+data class  RegisterGenerateOptionUser (
   /** User identifier */
   val id: String,
   /** User name */
@@ -738,7 +854,8 @@ data class RegisterGenerateOptionUser (
  *
  * Generated class from Pigeon that represents data sent in messages.
  */
-data class RegisterGenerateOptionPublicKeyParams (
+@Serializable
+data class  RegisterGenerateOptionPublicKeyParams (
   /** Algorithm identifier */
   val alg: Long,
   /** Credential type */
@@ -775,7 +892,8 @@ data class RegisterGenerateOptionPublicKeyParams (
  *
  * Generated class from Pigeon that represents data sent in messages.
  */
-data class RegisterGenerateOptionAuthenticatorSelection (
+@Serializable
+data class  RegisterGenerateOptionAuthenticatorSelection (
   /** Resident key requirement */
   val residentKey: String,
   /** User verification requirement */
@@ -820,7 +938,8 @@ data class RegisterGenerateOptionAuthenticatorSelection (
  *
  * Generated class from Pigeon that represents data sent in messages.
  */
-data class RegisterGenerateOptionExtension (
+@Serializable
+data class  RegisterGenerateOptionExtension (
   /** Credential properties extension */
   val credProps: Boolean
 )
@@ -853,7 +972,8 @@ data class RegisterGenerateOptionExtension (
  *
  * Generated class from Pigeon that represents data sent in messages.
  */
-data class RegisterVerifyResponse (
+@Serializable
+data class  RegisterVerifyResponse (
   /** Whether the registration was verified */
   val verified: Boolean,
   /** Access token for authenticated session */
@@ -896,96 +1016,106 @@ private open class MessagesPigeonCodec : StandardMessageCodec() {
   override fun readValueOfType(type: Byte, buffer: ByteBuffer): Any? {
     return when (type) {
       129.toByte() -> {
-        return (readValue(buffer) as? List<Any?>)?.let {
-          AuthGenerateOptionResponseData.fromList(it)
+        return (readValue(buffer) as Long?)?.let {
+          PasskeyErrorType.ofRaw(it.toInt())
         }
       }
       130.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          AuthGenerateOptionAllowCredential.fromList(it)
+          PasskeyException.fromList(it)
         }
       }
       131.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          AuthVerifyResponse.fromList(it)
+          AuthGenerateOptionResponseData.fromList(it)
         }
       }
       132.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          User.fromList(it)
+          AuthGenerateOptionAllowCredential.fromList(it)
         }
       }
       133.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          CreatePasskeyResponseData.fromList(it)
+          AuthVerifyResponse.fromList(it)
         }
       }
       134.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          CreatePasskeyResponse.fromList(it)
+          User.fromList(it)
         }
       }
       135.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          CreatePasskeyExtension.fromList(it)
+          CreatePasskeyResponseData.fromList(it)
         }
       }
       136.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          CreatePasskeyExtensionPrf.fromList(it)
+          CreatePasskeyResponse.fromList(it)
         }
       }
       137.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          CreatePasskeyExtensionProps.fromList(it)
+          CreatePasskeyExtension.fromList(it)
         }
       }
       138.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          GetPasskeyAuthenticationResponseData.fromList(it)
+          CreatePasskeyExtensionPrf.fromList(it)
         }
       }
       139.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          GetPasskeyAuthenticationResponse.fromList(it)
+          CreatePasskeyExtensionProps.fromList(it)
         }
       }
       140.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          RegisterGenerateOptionData.fromList(it)
+          GetPasskeyAuthenticationResponseData.fromList(it)
         }
       }
       141.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          RegisterGenerateOptionExcludeCredential.fromList(it)
+          GetPasskeyAuthenticationResponse.fromList(it)
         }
       }
       142.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          RegisterGenerateOptionRp.fromList(it)
+          RegisterGenerateOptionData.fromList(it)
         }
       }
       143.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          RegisterGenerateOptionUser.fromList(it)
+          RegisterGenerateOptionExcludeCredential.fromList(it)
         }
       }
       144.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          RegisterGenerateOptionPublicKeyParams.fromList(it)
+          RegisterGenerateOptionRp.fromList(it)
         }
       }
       145.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          RegisterGenerateOptionAuthenticatorSelection.fromList(it)
+          RegisterGenerateOptionUser.fromList(it)
         }
       }
       146.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          RegisterGenerateOptionExtension.fromList(it)
+          RegisterGenerateOptionPublicKeyParams.fromList(it)
         }
       }
       147.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          RegisterGenerateOptionAuthenticatorSelection.fromList(it)
+        }
+      }
+      148.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          RegisterGenerateOptionExtension.fromList(it)
+        }
+      }
+      149.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
           RegisterVerifyResponse.fromList(it)
         }
@@ -995,80 +1125,88 @@ private open class MessagesPigeonCodec : StandardMessageCodec() {
   }
   override fun writeValue(stream: ByteArrayOutputStream, value: Any?)   {
     when (value) {
-      is AuthGenerateOptionResponseData -> {
+      is PasskeyErrorType -> {
         stream.write(129)
-        writeValue(stream, value.toList())
+        writeValue(stream, value.raw)
       }
-      is AuthGenerateOptionAllowCredential -> {
+      is PasskeyException -> {
         stream.write(130)
         writeValue(stream, value.toList())
       }
-      is AuthVerifyResponse -> {
+      is AuthGenerateOptionResponseData -> {
         stream.write(131)
         writeValue(stream, value.toList())
       }
-      is User -> {
+      is AuthGenerateOptionAllowCredential -> {
         stream.write(132)
         writeValue(stream, value.toList())
       }
-      is CreatePasskeyResponseData -> {
+      is AuthVerifyResponse -> {
         stream.write(133)
         writeValue(stream, value.toList())
       }
-      is CreatePasskeyResponse -> {
+      is User -> {
         stream.write(134)
         writeValue(stream, value.toList())
       }
-      is CreatePasskeyExtension -> {
+      is CreatePasskeyResponseData -> {
         stream.write(135)
         writeValue(stream, value.toList())
       }
-      is CreatePasskeyExtensionPrf -> {
+      is CreatePasskeyResponse -> {
         stream.write(136)
         writeValue(stream, value.toList())
       }
-      is CreatePasskeyExtensionProps -> {
+      is CreatePasskeyExtension -> {
         stream.write(137)
         writeValue(stream, value.toList())
       }
-      is GetPasskeyAuthenticationResponseData -> {
+      is CreatePasskeyExtensionPrf -> {
         stream.write(138)
         writeValue(stream, value.toList())
       }
-      is GetPasskeyAuthenticationResponse -> {
+      is CreatePasskeyExtensionProps -> {
         stream.write(139)
         writeValue(stream, value.toList())
       }
-      is RegisterGenerateOptionData -> {
+      is GetPasskeyAuthenticationResponseData -> {
         stream.write(140)
         writeValue(stream, value.toList())
       }
-      is RegisterGenerateOptionExcludeCredential -> {
+      is GetPasskeyAuthenticationResponse -> {
         stream.write(141)
         writeValue(stream, value.toList())
       }
-      is RegisterGenerateOptionRp -> {
+      is RegisterGenerateOptionData -> {
         stream.write(142)
         writeValue(stream, value.toList())
       }
-      is RegisterGenerateOptionUser -> {
+      is RegisterGenerateOptionExcludeCredential -> {
         stream.write(143)
         writeValue(stream, value.toList())
       }
-      is RegisterGenerateOptionPublicKeyParams -> {
+      is RegisterGenerateOptionRp -> {
         stream.write(144)
         writeValue(stream, value.toList())
       }
-      is RegisterGenerateOptionAuthenticatorSelection -> {
+      is RegisterGenerateOptionUser -> {
         stream.write(145)
         writeValue(stream, value.toList())
       }
-      is RegisterGenerateOptionExtension -> {
+      is RegisterGenerateOptionPublicKeyParams -> {
         stream.write(146)
         writeValue(stream, value.toList())
       }
-      is RegisterVerifyResponse -> {
+      is RegisterGenerateOptionAuthenticatorSelection -> {
         stream.write(147)
+        writeValue(stream, value.toList())
+      }
+      is RegisterGenerateOptionExtension -> {
+        stream.write(148)
+        writeValue(stream, value.toList())
+      }
+      is RegisterVerifyResponse -> {
+        stream.write(149)
         writeValue(stream, value.toList())
       }
       else -> super.writeValue(stream, value)
@@ -1076,3 +1214,67 @@ private open class MessagesPigeonCodec : StandardMessageCodec() {
   }
 }
 
+
+/**
+ * Host API for passkey operations from Flutter to native platforms
+ *
+ * Generated interface from Pigeon that represents a handler of messages from Flutter.
+ */
+interface PasskeyHostApi {
+  /** Registers a new passkey credential */
+  fun register(options: RegisterGenerateOptionData, callback: (Result<CreatePasskeyResponseData>) -> Unit)
+  /** Authenticates with an existing passkey */
+  fun authenticate(request: AuthGenerateOptionResponseData, callback: (Result<GetPasskeyAuthenticationResponseData>) -> Unit)
+
+  companion object {
+    /** The codec used by PasskeyHostApi. */
+    val codec: MessageCodec<Any?> by lazy {
+      MessagesPigeonCodec()
+    }
+    /** Sets up an instance of `PasskeyHostApi` to handle messages through the `binaryMessenger`. */
+    @JvmOverloads
+    fun setUp(binaryMessenger: BinaryMessenger, api: PasskeyHostApi?, messageChannelSuffix: String = "") {
+      val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.flutter_passkey_service.PasskeyHostApi.register$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val optionsArg = args[0] as RegisterGenerateOptionData
+            api.register(optionsArg) { result: Result<CreatePasskeyResponseData> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(MessagesPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(MessagesPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.flutter_passkey_service.PasskeyHostApi.authenticate$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val requestArg = args[0] as AuthGenerateOptionResponseData
+            api.authenticate(requestArg) { result: Result<GetPasskeyAuthenticationResponseData> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(MessagesPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(MessagesPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+    }
+  }
+}

@@ -29,6 +29,32 @@ final class PigeonError: Error {
   }
 }
 
+private func wrapResult(_ result: Any?) -> [Any?] {
+  return [result]
+}
+
+private func wrapError(_ error: Any) -> [Any?] {
+  if let pigeonError = error as? PigeonError {
+    return [
+      pigeonError.code,
+      pigeonError.message,
+      pigeonError.details,
+    ]
+  }
+  if let flutterError = error as? FlutterError {
+    return [
+      flutterError.code,
+      flutterError.message,
+      flutterError.details,
+    ]
+  }
+  return [
+    "\(error)",
+    "\(type(of: error))",
+    "Stacktrace: \(Thread.callStackSymbols)",
+  ]
+}
+
 private func isNullish(_ value: Any?) -> Bool {
   return value is NSNull || value == nil
 }
@@ -101,6 +127,78 @@ func deepHashMessages(value: Any?, hasher: inout Hasher) {
 }
 
     
+
+/// Predefined error types for consistent error handling across platforms
+enum PasskeyErrorType: Int {
+  case invalidParameters = 0
+  case missingRequiredField = 1
+  case invalidFormat = 2
+  case decodingChallenge = 3
+  case userCancelled = 4
+  case userTimeout = 5
+  case userOptedOut = 6
+  case insufficientPermissions = 7
+  case securityViolation = 8
+  case notAllowed = 9
+  case domainNotAssociated = 10
+  case noCredentialsAvailable = 11
+  case credentialNotFound = 12
+  case invalidCredential = 13
+  case credentialAlreadyExists = 14
+  case invalidResponse = 15
+  case notHandled = 16
+  case failed = 17
+  case platformNotSupported = 18
+  case operationNotSupported = 19
+  case systemError = 20
+  case networkError = 21
+  case domError = 22
+  case webauthnError = 23
+  case attestationError = 24
+  case excludeCredentialsMatch = 25
+  case unexpectedAuthorizationResponse = 26
+  case wkErrorDomain = 27
+  case unknownError = 28
+  case unexpectedError = 29
+}
+
+/// Represents a standardized passkey exception that can be thrown across platforms
+///
+/// Generated class from Pigeon that represents data sent in messages.
+struct PasskeyException: Hashable {
+  /// Error type identifying the specific type of error
+  var errorType: PasskeyErrorType
+  /// Error message describing what went wrong
+  var message: String
+  /// Optional additional details about the error
+  var details: String
+
+
+  // swift-format-ignore: AlwaysUseLowerCamelCase
+  static func fromList(_ pigeonVar_list: [Any?]) -> PasskeyException? {
+    let errorType = pigeonVar_list[0] as! PasskeyErrorType
+    let message = pigeonVar_list[1] as! String
+    let details = pigeonVar_list[2] as! String
+
+    return PasskeyException(
+      errorType: errorType,
+      message: message,
+      details: details
+    )
+  }
+  func toList() -> [Any?] {
+    return [
+      errorType,
+      message,
+      details,
+    ]
+  }
+  static func == (lhs: PasskeyException, rhs: PasskeyException) -> Bool {
+    return deepEqualsMessages(lhs.toList(), rhs.toList())  }
+  func hash(into hasher: inout Hasher) {
+    deepHashMessages(value: toList(), hasher: &hasher)
+  }
+}
 
 /// Represents the response data for authentication generation options
 ///
@@ -898,42 +996,50 @@ private class MessagesPigeonCodecReader: FlutterStandardReader {
   override func readValue(ofType type: UInt8) -> Any? {
     switch type {
     case 129:
-      return AuthGenerateOptionResponseData.fromList(self.readValue() as! [Any?])
+      let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
+      if let enumResultAsInt = enumResultAsInt {
+        return PasskeyErrorType(rawValue: enumResultAsInt)
+      }
+      return nil
     case 130:
-      return AuthGenerateOptionAllowCredential.fromList(self.readValue() as! [Any?])
+      return PasskeyException.fromList(self.readValue() as! [Any?])
     case 131:
-      return AuthVerifyResponse.fromList(self.readValue() as! [Any?])
+      return AuthGenerateOptionResponseData.fromList(self.readValue() as! [Any?])
     case 132:
-      return User.fromList(self.readValue() as! [Any?])
+      return AuthGenerateOptionAllowCredential.fromList(self.readValue() as! [Any?])
     case 133:
-      return CreatePasskeyResponseData.fromList(self.readValue() as! [Any?])
+      return AuthVerifyResponse.fromList(self.readValue() as! [Any?])
     case 134:
-      return CreatePasskeyResponse.fromList(self.readValue() as! [Any?])
+      return User.fromList(self.readValue() as! [Any?])
     case 135:
-      return CreatePasskeyExtension.fromList(self.readValue() as! [Any?])
+      return CreatePasskeyResponseData.fromList(self.readValue() as! [Any?])
     case 136:
-      return CreatePasskeyExtensionPrf.fromList(self.readValue() as! [Any?])
+      return CreatePasskeyResponse.fromList(self.readValue() as! [Any?])
     case 137:
-      return CreatePasskeyExtensionProps.fromList(self.readValue() as! [Any?])
+      return CreatePasskeyExtension.fromList(self.readValue() as! [Any?])
     case 138:
-      return GetPasskeyAuthenticationResponseData.fromList(self.readValue() as! [Any?])
+      return CreatePasskeyExtensionPrf.fromList(self.readValue() as! [Any?])
     case 139:
-      return GetPasskeyAuthenticationResponse.fromList(self.readValue() as! [Any?])
+      return CreatePasskeyExtensionProps.fromList(self.readValue() as! [Any?])
     case 140:
-      return RegisterGenerateOptionData.fromList(self.readValue() as! [Any?])
+      return GetPasskeyAuthenticationResponseData.fromList(self.readValue() as! [Any?])
     case 141:
-      return RegisterGenerateOptionExcludeCredential.fromList(self.readValue() as! [Any?])
+      return GetPasskeyAuthenticationResponse.fromList(self.readValue() as! [Any?])
     case 142:
-      return RegisterGenerateOptionRp.fromList(self.readValue() as! [Any?])
+      return RegisterGenerateOptionData.fromList(self.readValue() as! [Any?])
     case 143:
-      return RegisterGenerateOptionUser.fromList(self.readValue() as! [Any?])
+      return RegisterGenerateOptionExcludeCredential.fromList(self.readValue() as! [Any?])
     case 144:
-      return RegisterGenerateOptionPublicKeyParams.fromList(self.readValue() as! [Any?])
+      return RegisterGenerateOptionRp.fromList(self.readValue() as! [Any?])
     case 145:
-      return RegisterGenerateOptionAuthenticatorSelection.fromList(self.readValue() as! [Any?])
+      return RegisterGenerateOptionUser.fromList(self.readValue() as! [Any?])
     case 146:
-      return RegisterGenerateOptionExtension.fromList(self.readValue() as! [Any?])
+      return RegisterGenerateOptionPublicKeyParams.fromList(self.readValue() as! [Any?])
     case 147:
+      return RegisterGenerateOptionAuthenticatorSelection.fromList(self.readValue() as! [Any?])
+    case 148:
+      return RegisterGenerateOptionExtension.fromList(self.readValue() as! [Any?])
+    case 149:
       return RegisterVerifyResponse.fromList(self.readValue() as! [Any?])
     default:
       return super.readValue(ofType: type)
@@ -943,62 +1049,68 @@ private class MessagesPigeonCodecReader: FlutterStandardReader {
 
 private class MessagesPigeonCodecWriter: FlutterStandardWriter {
   override func writeValue(_ value: Any) {
-    if let value = value as? AuthGenerateOptionResponseData {
+    if let value = value as? PasskeyErrorType {
       super.writeByte(129)
-      super.writeValue(value.toList())
-    } else if let value = value as? AuthGenerateOptionAllowCredential {
+      super.writeValue(value.rawValue)
+    } else if let value = value as? PasskeyException {
       super.writeByte(130)
       super.writeValue(value.toList())
-    } else if let value = value as? AuthVerifyResponse {
+    } else if let value = value as? AuthGenerateOptionResponseData {
       super.writeByte(131)
       super.writeValue(value.toList())
-    } else if let value = value as? User {
+    } else if let value = value as? AuthGenerateOptionAllowCredential {
       super.writeByte(132)
       super.writeValue(value.toList())
-    } else if let value = value as? CreatePasskeyResponseData {
+    } else if let value = value as? AuthVerifyResponse {
       super.writeByte(133)
       super.writeValue(value.toList())
-    } else if let value = value as? CreatePasskeyResponse {
+    } else if let value = value as? User {
       super.writeByte(134)
       super.writeValue(value.toList())
-    } else if let value = value as? CreatePasskeyExtension {
+    } else if let value = value as? CreatePasskeyResponseData {
       super.writeByte(135)
       super.writeValue(value.toList())
-    } else if let value = value as? CreatePasskeyExtensionPrf {
+    } else if let value = value as? CreatePasskeyResponse {
       super.writeByte(136)
       super.writeValue(value.toList())
-    } else if let value = value as? CreatePasskeyExtensionProps {
+    } else if let value = value as? CreatePasskeyExtension {
       super.writeByte(137)
       super.writeValue(value.toList())
-    } else if let value = value as? GetPasskeyAuthenticationResponseData {
+    } else if let value = value as? CreatePasskeyExtensionPrf {
       super.writeByte(138)
       super.writeValue(value.toList())
-    } else if let value = value as? GetPasskeyAuthenticationResponse {
+    } else if let value = value as? CreatePasskeyExtensionProps {
       super.writeByte(139)
       super.writeValue(value.toList())
-    } else if let value = value as? RegisterGenerateOptionData {
+    } else if let value = value as? GetPasskeyAuthenticationResponseData {
       super.writeByte(140)
       super.writeValue(value.toList())
-    } else if let value = value as? RegisterGenerateOptionExcludeCredential {
+    } else if let value = value as? GetPasskeyAuthenticationResponse {
       super.writeByte(141)
       super.writeValue(value.toList())
-    } else if let value = value as? RegisterGenerateOptionRp {
+    } else if let value = value as? RegisterGenerateOptionData {
       super.writeByte(142)
       super.writeValue(value.toList())
-    } else if let value = value as? RegisterGenerateOptionUser {
+    } else if let value = value as? RegisterGenerateOptionExcludeCredential {
       super.writeByte(143)
       super.writeValue(value.toList())
-    } else if let value = value as? RegisterGenerateOptionPublicKeyParams {
+    } else if let value = value as? RegisterGenerateOptionRp {
       super.writeByte(144)
       super.writeValue(value.toList())
-    } else if let value = value as? RegisterGenerateOptionAuthenticatorSelection {
+    } else if let value = value as? RegisterGenerateOptionUser {
       super.writeByte(145)
       super.writeValue(value.toList())
-    } else if let value = value as? RegisterGenerateOptionExtension {
+    } else if let value = value as? RegisterGenerateOptionPublicKeyParams {
       super.writeByte(146)
       super.writeValue(value.toList())
-    } else if let value = value as? RegisterVerifyResponse {
+    } else if let value = value as? RegisterGenerateOptionAuthenticatorSelection {
       super.writeByte(147)
+      super.writeValue(value.toList())
+    } else if let value = value as? RegisterGenerateOptionExtension {
+      super.writeByte(148)
+      super.writeValue(value.toList())
+    } else if let value = value as? RegisterVerifyResponse {
+      super.writeByte(149)
       super.writeValue(value.toList())
     } else {
       super.writeValue(value)
@@ -1020,3 +1132,58 @@ class MessagesPigeonCodec: FlutterStandardMessageCodec, @unchecked Sendable {
   static let shared = MessagesPigeonCodec(readerWriter: MessagesPigeonCodecReaderWriter())
 }
 
+
+/// Host API for passkey operations from Flutter to native platforms
+///
+/// Generated protocol from Pigeon that represents a handler of messages from Flutter.
+protocol PasskeyHostApi {
+  /// Registers a new passkey credential
+  func register(options: RegisterGenerateOptionData, completion: @escaping (Result<CreatePasskeyResponseData, Error>) -> Void)
+  /// Authenticates with an existing passkey
+  func authenticate(request: AuthGenerateOptionResponseData, completion: @escaping (Result<GetPasskeyAuthenticationResponseData, Error>) -> Void)
+}
+
+/// Generated setup class from Pigeon to handle messages through the `binaryMessenger`.
+class PasskeyHostApiSetup {
+  static var codec: FlutterStandardMessageCodec { MessagesPigeonCodec.shared }
+  /// Sets up an instance of `PasskeyHostApi` to handle messages through the `binaryMessenger`.
+  static func setUp(binaryMessenger: FlutterBinaryMessenger, api: PasskeyHostApi?, messageChannelSuffix: String = "") {
+    let channelSuffix = messageChannelSuffix.count > 0 ? ".\(messageChannelSuffix)" : ""
+    /// Registers a new passkey credential
+    let registerChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.flutter_passkey_service.PasskeyHostApi.register\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      registerChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let optionsArg = args[0] as! RegisterGenerateOptionData
+        api.register(options: optionsArg) { result in
+          switch result {
+          case .success(let res):
+            reply(wrapResult(res))
+          case .failure(let error):
+            reply(wrapError(error))
+          }
+        }
+      }
+    } else {
+      registerChannel.setMessageHandler(nil)
+    }
+    /// Authenticates with an existing passkey
+    let authenticateChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.flutter_passkey_service.PasskeyHostApi.authenticate\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      authenticateChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let requestArg = args[0] as! AuthGenerateOptionResponseData
+        api.authenticate(request: requestArg) { result in
+          switch result {
+          case .success(let res):
+            reply(wrapResult(res))
+          case .failure(let error):
+            reply(wrapError(error))
+          }
+        }
+      }
+    } else {
+      authenticateChannel.setMessageHandler(nil)
+    }
+  }
+}

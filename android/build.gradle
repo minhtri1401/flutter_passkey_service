@@ -23,7 +23,7 @@ allprojects {
 
 apply plugin: "com.android.library"
 apply plugin: "kotlin-android"
-
+apply plugin: "org.jetbrains.kotlin.android"
 android {
     namespace = "com.example.flutter_passkey_service"
 
@@ -44,12 +44,14 @@ android {
     }
 
     defaultConfig {
-        minSdk = 21
+        minSdk = 23
+        minSdkVersion 23
     }
 
     dependencies {
         testImplementation("org.jetbrains.kotlin:kotlin-test")
         testImplementation("org.mockito:mockito-core:5.0.0")
+        implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
         implementation("androidx.credentials:credentials:1.6.0-alpha05")
         implementation("androidx.credentials:credentials-play-services-auth:1.6.0-alpha05")
         implementation("com.google.android.gms:play-services-auth:21.4.0")
