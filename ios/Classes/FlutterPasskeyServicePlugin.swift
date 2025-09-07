@@ -2,18 +2,20 @@ import Flutter
 import UIKit
 
 public class FlutterPasskeyServicePlugin: NSObject, FlutterPlugin {
-  public static func register(with registrar: FlutterPluginRegistrar) {
-    let channel = FlutterMethodChannel(name: "flutter_passkey_service", binaryMessenger: registrar.messenger())
-    let instance = FlutterPasskeyServicePlugin()
-    registrar.addMethodCallDelegate(instance, channel: channel)
-  }
-
-  public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-    switch call.method {
-    case "getPlatformVersion":
-      result("iOS " + UIDevice.current.systemVersion)
-    default:
-      result(FlutterMethodNotImplemented)
+    private var passkeyHostApi: Any?
+    
+    public static func register(with registrar: FlutterPluginRegistrar) {
+        let instance = FlutterPasskeyServicePlugin()
+        instance.setupPigeonApi(with: registrar)
     }
-  }
+    
+    private func setupPigeonApi(with registrar: FlutterPluginRegistrar) {
+        if #available(iOS 16.0, *) {
+            passkeyHostApi = PasskeyHostApiImpl()
+            PasskeyHostApiSetup.setUp(binaryMessenger: registrar.messenger(), api: passkeyHostApi as? PasskeyHostApi)
+        } else {
+            // For iOS versions below 16.0, passkeys are not available
+            PasskeyHostApiSetup.setUp(binaryMessenger: registrar.messenger(), api: nil)
+        }
+    }
 }
