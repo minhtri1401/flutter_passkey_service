@@ -1,0 +1,19 @@
+# Pigeon source files (not the generated files)
+lib/pigeons/messages.dart
+
+# Development files
+lib/pigeons/simple_messages.dart
+
+# Example app specific files that shouldn't be in the published package
+example/.flutter-plugins
+example/.flutter-plugins-dependencies
+example/.packages
+example/build/
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
