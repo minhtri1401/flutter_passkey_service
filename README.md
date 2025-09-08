@@ -43,7 +43,7 @@ flutter pub get
    - Select your target → "Signing & Capabilities"
    - Click "+" and add "Associated Domains"
 
-3. **Configure Domain**: Add your domain with `webcredentials:` prefix:
+3. **Configure Domain**: Add your domain with `webcredentials` prefix:
    ```
    webcredentials:yourdomain.com
    ```
@@ -534,8 +534,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🆘 Support
 
 - **Documentation**: [API Reference](https://pub.dev/documentation/flutter_passkey_service)
-- **Issues**: [GitHub Issues](https://github.com/your-username/flutter_passkey_service/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-username/flutter_passkey_service/discussions)
+- **Issues**: [GitHub Issues](https://github.com/minhtri1401/flutter_passkey_service/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/minhtri1401/flutter_passkey_service/discussions)
 
 ## 🔗 Resources
 
