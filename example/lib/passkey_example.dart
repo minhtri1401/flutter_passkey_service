@@ -22,7 +22,7 @@ class _PasskeyExampleState extends State<PasskeyExample> {
     });
 
     try {
-      // Create registration options
+      // Method 1: Traditional approach
       final options = FlutterPasskeyService.createRegistrationOptions(
         // Get this from your server
         challenge: 'your-server-generated-challenge',
@@ -32,6 +32,14 @@ class _PasskeyExampleState extends State<PasskeyExample> {
         username: 'user@example.com',
         displayName: 'John Doe',
       );
+
+      // Method 2: From JSON (simulating server response)
+      // Uncomment to test JSON parsing:
+      // final serverJson = getExampleRegistrationJson();
+      // final options = FlutterPasskeyService.createRegistrationOptionsFromJson(serverJson);
+
+      // Debug: Convert options to JSON for logging
+      print('Registration options: ${options.toJsonString()}');
 
       // Register the passkey
       final result = await FlutterPasskeyService.register(options);
@@ -53,13 +61,21 @@ class _PasskeyExampleState extends State<PasskeyExample> {
     });
 
     try {
-      // Create authentication options
+      // Method 1: Traditional approach
       final request = FlutterPasskeyService.createAuthenticationOptions(
         challenge:
             'your-server-generated-challenge', // Get this from your server
         rpId: 'example.com', // Your domain
-        // allowCredentials: [], // Optional: specify which credentials to allow
+        // allowedCredentialIds: ['cred-id-1'], // Optional: restrict to specific credentials
       );
+
+      // Method 2: From JSON (simulating server response)
+      // Uncomment to test JSON parsing:
+      // final serverJson = getExampleAuthenticationJson();
+      // final request = FlutterPasskeyService.createAuthenticationOptionsFromJson(serverJson);
+
+      // Debug: Convert request to JSON for logging
+      print('Authentication request: ${request.toJsonString()}');
 
       // Authenticate with passkey
       final result = await FlutterPasskeyService.authenticate(request);
@@ -209,5 +225,48 @@ class _PasskeyExampleState extends State<PasskeyExample> {
         ),
       ),
     );
+  }
+
+  /// Example JSON data that could come from your server
+  Map<String, dynamic> getExampleRegistrationJson() {
+    return {
+      "challenge": "example-challenge-from-server",
+      "rp": {"name": "My App", "id": "example.com"},
+      "user": {
+        "id": "user-123",
+        "name": "user@example.com",
+        "displayName": "John Doe",
+      },
+      "pubKeyCredParams": [
+        {"alg": -7, "type": "public-key"},
+        {"alg": -257, "type": "public-key"},
+      ],
+      "timeout": 60000,
+      "attestation": "none",
+      "authenticatorSelection": {
+        "residentKey": "preferred",
+        "userVerification": "required",
+        "requireResidentKey": false,
+        "authenticatorAttachment": "platform",
+      },
+      "extensions": {"credProps": true},
+    };
+  }
+
+  /// Example authentication JSON data
+  Map<String, dynamic> getExampleAuthenticationJson() {
+    return {
+      "challenge": "auth-challenge-from-server",
+      "rpId": "example.com",
+      "allowCredentials": [
+        {
+          "id": "example-credential-id",
+          "type": "public-key",
+          "transports": ["internal", "hybrid"],
+        },
+      ],
+      "timeout": 60000,
+      "userVerification": "required",
+    };
   }
 }

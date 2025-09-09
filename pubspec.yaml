@@ -1,6 +1,6 @@
 name: flutter_passkey_service
 description: "A comprehensive Flutter plugin for seamless Passkey (WebAuthn) integration on iOS and Android. Enable passwordless authentication with biometric security."
-version: 0.0.2
+version: 0.0.3
 homepage: https://github.com/minhtri1401/flutter_passkey_service
 repository: https://github.com/minhtri1401/flutter_passkey_service
 issue_tracker: https://github.com/minhtri1401/flutter_passkey_service/issues
