@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📚 Documentation
+    url: https://pub.dev/documentation/flutter_passkey_service
+    about: Read the comprehensive API documentation and guides
+  - name: 💬 GitHub Discussions
+    url: https://github.com/minhtri1401/flutter_passkey_service/discussions
+    about: Ask questions and discuss with the community
+  - name: 🔐 WebAuthn Resources
+    url: https://passkeys.dev/
+    about: Learn more about Passkeys and WebAuthn standards
+  - name: 📱 Example App
+    url: https://github.com/minhtri1401/flutter_passkey_service/tree/main/example
+    about: Check out the working example implementation

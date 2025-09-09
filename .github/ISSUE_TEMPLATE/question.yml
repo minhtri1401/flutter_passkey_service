@@ -1,0 +1,112 @@
+name: ❓ Question / Support
+description: Ask a question or get help with Flutter Passkey Service
+title: "[Question]: "
+labels: ["question", "needs-triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for your question! Please provide as much detail as possible to help us assist you.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission Checklist
+      description: Please check all the boxes below before submitting
+      options:
+        - label: I have searched existing issues and discussions for similar questions
+          required: true
+        - label: I have read the documentation and followed the setup guides
+          required: true
+        - label: This is not a bug report (use the Bug Report template for bugs)
+          required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What would you like to know or what are you trying to achieve?
+      placeholder: "I'm trying to... but I'm having trouble with..."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Question Category
+      description: What category does your question fall into?
+      options:
+        - Setup and Configuration
+        - Domain Verification
+        - iOS Implementation
+        - Android Implementation
+        - API Usage
+        - Error Handling
+        - Security and Best Practices
+        - Server Integration
+        - Testing
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Provide context about what you're building and what you've tried
+      placeholder: "I'm building an app that... I've tried..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: code
+    attributes:
+      label: Relevant Code
+      description: Share any relevant code you're working with
+      render: dart
+      placeholder: |
+        // Your code here
+        final options = FlutterPasskeyService.createRegistrationOptions(/*...*/);
+    validations:
+      required: false
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      description: Which platform is your question about?
+      options:
+        - iOS
+        - Android
+        - Both iOS and Android
+        - General/Platform-agnostic
+    validations:
+      required: true
+
+  - type: input
+    id: flutter_version
+    attributes:
+      label: Flutter Version
+      description: Output of `flutter --version`
+      placeholder: "Flutter 3.24.0 • channel stable"
+    validations:
+      required: false
+
+  - type: input
+    id: plugin_version
+    attributes:
+      label: Plugin Version
+      description: Which version of flutter_passkey_service are you using?
+      placeholder: "0.0.3"
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Information
+      description: Any other information that might be helpful
+      placeholder: "Any additional details..."
+    validations:
+      required: false
