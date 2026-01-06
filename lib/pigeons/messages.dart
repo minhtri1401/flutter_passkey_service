@@ -88,6 +88,7 @@ class AuthGenerateOptionResponseData {
     required this.allowCredentials,
     required this.timeout,
     required this.userVerification,
+    this.extensions,
   });
 
   /// The relying party identifier
@@ -104,6 +105,42 @@ class AuthGenerateOptionResponseData {
 
   /// User verification requirement
   String userVerification;
+
+  /// Extensions for authentication
+  AuthGenerateOptionExtension? extensions;
+}
+
+/// Represents extensions for authentication
+class AuthGenerateOptionExtension {
+  AuthGenerateOptionExtension({this.prf});
+
+  /// PRF extension
+  PrfExtension? prf;
+}
+
+/// Represents PRF extension data
+class PrfExtension {
+  PrfExtension({this.eval, this.evalByCredential, this.enabled});
+
+  /// PRF evaluation point (optional)
+  PrfExtensionEval? eval;
+
+  /// PRF evaluation by credential ID (optional)
+  Map<String, PrfExtensionEval?>? evalByCredential;
+
+  /// Enabled flag (for registration)
+  bool? enabled;
+}
+
+/// Represents PRF evaluation parameters
+class PrfExtensionEval {
+  PrfExtensionEval({required this.first, this.second});
+
+  /// First salt (Base64URL encoded)
+  String first;
+
+  /// Second salt (Base64URL encoded, optional)
+  String? second;
 }
 
 /// Represents an allowed credential for authentication
@@ -240,10 +277,15 @@ class CreatePasskeyExtension {
 
 /// Represents PRF extension properties
 class CreatePasskeyExtensionPrf {
-  CreatePasskeyExtensionPrf({required this.rk});
+  CreatePasskeyExtensionPrf({required this.enabled, this.results});
 
-  /// Enabled flag
-  bool rk;
+  /// Enabled flag (was rk, now enabled to match spec better or keep rk if it means resident key?)
+  /// Actually spec says `prf` output is `{ enabled: boolean, results?: { first: Buffer, second?: Buffer } }`
+  /// but wait, `rk` usually stands for resident key. In PRF context, `enabled` is the boolean.
+  bool enabled;
+
+  /// Results of PRF evaluation
+  PrfExtensionEval? results;
 }
 
 /// Represents credential properties extension
@@ -263,6 +305,7 @@ class GetPasskeyAuthenticationResponseData {
     required this.response,
     required this.type,
     this.username = 'username',
+    required this.clientExtensionResults,
   });
 
   /// Authenticator attachment type
@@ -282,6 +325,9 @@ class GetPasskeyAuthenticationResponseData {
 
   /// Username associated with the passkey
   String username;
+
+  /// Client extension results
+  CreatePasskeyExtension clientExtensionResults;
 }
 
 /// Represents the authentication response from passkey
@@ -433,10 +479,13 @@ class RegisterGenerateOptionAuthenticatorSelection {
 
 /// Represents extensions for registration
 class RegisterGenerateOptionExtension {
-  RegisterGenerateOptionExtension({required this.credProps});
+  RegisterGenerateOptionExtension({required this.credProps, this.prf});
 
   /// Credential properties extension
   bool credProps;
+
+  /// PRF extension
+  PrfExtension? prf;
 }
 
 /// Represents the response data for registration verification
