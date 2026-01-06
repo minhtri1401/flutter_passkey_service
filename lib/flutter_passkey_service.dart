@@ -55,8 +55,25 @@ class FlutterPasskeyService {
     int timeout = 60000,
     String attestation = 'none',
     List<RegisterGenerateOptionExcludeCredential> excludeCredentials = const [],
+    List<String>? excludeCredentialIds,
     String authenticatorAttachment = 'platform',
+    String userVerification = 'required',
+    String residentKey = 'preferred',
+    bool requireResidentKey = false,
   }) {
+    // Convert excludeCredentialIds to excludeCredentials if provided
+    final credentials =
+        excludeCredentialIds
+            ?.map(
+              (id) => RegisterGenerateOptionExcludeCredential(
+                id: id,
+                type: 'public-key',
+                transports: ['internal', 'hybrid'],
+              ),
+            )
+            .toList() ??
+        excludeCredentials;
+
     return RegisterGenerateOptionData(
       challenge: challenge,
       rp: RegisterGenerateOptionRp(name: rpName, id: rpId),
@@ -77,11 +94,11 @@ class FlutterPasskeyService {
       ],
       timeout: timeout,
       attestation: attestation,
-      excludeCredentials: excludeCredentials,
+      excludeCredentials: credentials,
       authenticatorSelection: RegisterGenerateOptionAuthenticatorSelection(
-        residentKey: 'preferred',
-        userVerification: 'required',
-        requireResidentKey: false,
+        residentKey: residentKey,
+        userVerification: userVerification,
+        requireResidentKey: requireResidentKey,
         authenticatorAttachment: authenticatorAttachment,
       ),
       extensions: RegisterGenerateOptionExtension(credProps: true),
@@ -179,7 +196,7 @@ class FlutterPasskeyService {
                   type: cred['type'] as String,
                   transports:
                       (cred['transports'] as List<dynamic>?)?.cast<String>() ??
-                      ['internal'],
+                      ['internal', 'hybrid'],
                 ),
               )
               .toList() ??
