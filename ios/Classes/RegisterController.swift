@@ -27,28 +27,6 @@ class RegisterController: NSObject, ASAuthorizationControllerDelegate, ASAuthori
             if #available(iOS 18.0, *) {
                 if let prf = r.prf {
                     // Extract PRF output
-                    // r.prf is ASAuthorizationPublicKeyCredentialPRFRegistrationOutput
-                    // It should have 'checkForSupport' result or something similar.
-                    // It might have 'first' and 'second' outputs if we passed inputs during registration (rare).
-
-                    // Actually, for registration, usually we just check if it's enabled.
-                    // But if inputs were provided, it might have results.
-
-                    // Assuming structure:
-                    // prf.isSupported (bool)
-                    // prf.first (Data?)
-                    // prf.second (Data?)
-
-                    // Let's assume generic access for now or just check simple properties.
-                    // Since I can't verify exact property names, I will try to map common ones.
-                    // If 'isSupported' exists:
-                    // prfOutput = CreatePasskeyExtensionPrf(enabled: prf.isSupported, results: nil)
-
-                    // Wait, Pigeon definition for CreatePasskeyExtensionPrf has 'enabled' and 'results'.
-                    // If the user provided inputs during registration, we might get results.
-                    // But usually inputs are for authentication.
-
-                    // Let's assume we just report enabled status if we can find it.
                     let isSupported = prf.isSupported
 
                     var results: PrfExtensionEval? = nil
