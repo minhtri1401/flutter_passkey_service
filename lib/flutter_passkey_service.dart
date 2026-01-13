@@ -55,8 +55,26 @@ class FlutterPasskeyService {
     int timeout = 60000,
     String attestation = 'none',
     List<RegisterGenerateOptionExcludeCredential> excludeCredentials = const [],
+    List<String>? excludeCredentialIds,
     String authenticatorAttachment = 'platform',
+    String userVerification = 'required',
+    String residentKey = 'preferred',
+    bool requireResidentKey = false,
+    bool enablePrf = false,
   }) {
+    // Convert excludeCredentialIds to excludeCredentials if provided
+    final credentials =
+        excludeCredentialIds
+            ?.map(
+              (id) => RegisterGenerateOptionExcludeCredential(
+                id: id,
+                type: 'public-key',
+                transports: ['internal', 'hybrid'],
+              ),
+            )
+            .toList() ??
+        excludeCredentials;
+
     return RegisterGenerateOptionData(
       challenge: challenge,
       rp: RegisterGenerateOptionRp(name: rpName, id: rpId),
@@ -77,14 +95,17 @@ class FlutterPasskeyService {
       ],
       timeout: timeout,
       attestation: attestation,
-      excludeCredentials: excludeCredentials,
+      excludeCredentials: credentials,
       authenticatorSelection: RegisterGenerateOptionAuthenticatorSelection(
-        residentKey: 'preferred',
-        userVerification: 'required',
-        requireResidentKey: false,
+        residentKey: residentKey,
+        userVerification: userVerification,
+        requireResidentKey: requireResidentKey,
         authenticatorAttachment: authenticatorAttachment,
       ),
-      extensions: RegisterGenerateOptionExtension(credProps: true),
+      extensions: RegisterGenerateOptionExtension(
+        credProps: true,
+        prf: enablePrf ? PrfExtension(eval: null, enabled: true) : null,
+      ),
     );
   }
 
@@ -96,6 +117,7 @@ class FlutterPasskeyService {
     List<String>? allowedCredentialIds,
     int timeout = 60000,
     String userVerification = 'required',
+    PrfExtensionEval? prfEval,
   }) {
     // Convert allowedCredentialIds to allowCredentials if provided
     final credentials =
@@ -116,6 +138,10 @@ class FlutterPasskeyService {
       allowCredentials: credentials,
       timeout: timeout,
       userVerification: userVerification,
+      extensions:
+          prfEval != null
+              ? AuthGenerateOptionExtension(prf: PrfExtension(eval: prfEval))
+              : null,
     );
   }
 
@@ -179,7 +205,7 @@ class FlutterPasskeyService {
                   type: cred['type'] as String,
                   transports:
                       (cred['transports'] as List<dynamic>?)?.cast<String>() ??
-                      ['internal'],
+                      ['internal', 'hybrid'],
                 ),
               )
               .toList() ??
@@ -189,6 +215,7 @@ class FlutterPasskeyService {
       ),
       extensions: RegisterGenerateOptionExtension(
         credProps: json['extensions']?['credProps'] as bool? ?? true,
+        prf: _parsePrfExtension(json['extensions']?['prf'] as Map<String, dynamic>?),
       ),
     );
   }
@@ -232,6 +259,9 @@ class FlutterPasskeyService {
           [],
       timeout: json['timeout'] as int? ?? 60000,
       userVerification: json['userVerification'] as String? ?? 'required',
+      extensions: json['extensions'] != null ? AuthGenerateOptionExtension(
+        prf: _parsePrfExtension(json['extensions']['prf'] as Map<String, dynamic>?),
+      ) : null,
     );
   }
 
@@ -274,6 +304,38 @@ class FlutterPasskeyService {
           json['authenticatorAttachment'] as String? ?? 'platform',
     );
   }
+
+  /// Helper method to parse PRF extension from JSON
+  static PrfExtension? _parsePrfExtension(Map<String, dynamic>? json) {
+    if (json == null) return null;
+
+    // Check if evaluation is requested
+    final evalJson = json['eval'];
+    PrfExtensionEval? eval;
+    if (evalJson is Map<String, dynamic>) {
+      eval = PrfExtensionEval(
+        first: evalJson['first'] as String,
+        second: evalJson['second'] as String?,
+      );
+    }
+
+    // Check if evalByCredential is provided
+    final evalByCredJson = json['evalByCredential'];
+    Map<String, PrfExtensionEval?>? evalByCredential;
+    if (evalByCredJson is Map<String, dynamic>) {
+      evalByCredential = {};
+      evalByCredJson.forEach((key, value) {
+        if (value is Map<String, dynamic>) {
+          evalByCredential![key] = PrfExtensionEval(
+            first: value['first'] as String,
+            second: value['second'] as String?,
+          );
+        }
+      });
+    }
+
+    return PrfExtension(eval: eval, evalByCredential: evalByCredential);
+  }
 }
 
 /// Extension methods for convenient JSON serialization
@@ -311,7 +373,10 @@ extension RegisterGenerateOptionDataExtension on RegisterGenerateOptionData {
         'authenticatorAttachment':
             authenticatorSelection.authenticatorAttachment,
       },
-      'extensions': {'credProps': extensions.credProps},
+      'extensions': {
+        'credProps': extensions.credProps,
+        if (extensions.prf != null) 'prf': _prfToJson(extensions.prf!),
+      },
     };
   }
 
@@ -340,9 +405,36 @@ extension AuthGenerateOptionResponseDataExtension
           .toList(),
       'timeout': timeout,
       'userVerification': userVerification,
+      if (extensions?.prf != null) 'extensions': {'prf': _prfToJson(extensions!.prf!)},
     };
   }
 
   /// Converts [AuthGenerateOptionResponseData] to JSON string
   String toJsonString() => jsonEncode(toJson());
+}
+
+Map<String, dynamic> _prfToJson(PrfExtension prf) {
+  final json = <String, dynamic>{};
+  if (prf.enabled != null) {
+    json['enabled'] = prf.enabled;
+  }
+  if (prf.eval != null) {
+    json['eval'] = {
+      'first': prf.eval!.first,
+      if (prf.eval!.second != null) 'second': prf.eval!.second,
+    };
+  }
+  if (prf.evalByCredential != null) {
+    final evalByCred = <String, dynamic>{};
+    prf.evalByCredential!.forEach((key, value) {
+      if (value != null) {
+        evalByCred[key] = {
+          'first': value.first,
+          if (value.second != null) 'second': value.second,
+        };
+      }
+    });
+    json['evalByCredential'] = evalByCred;
+  }
+  return json;
 }

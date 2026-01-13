@@ -160,6 +160,120 @@ data class  PasskeyException (
 }
 
 /**
+ * Represents extensions for authentication
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+@Serializable
+data class  AuthGenerateOptionExtension (
+  /** PRF extension */
+  val prf: PrfExtension? = null
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): AuthGenerateOptionExtension {
+      val prf = pigeonVar_list[0] as PrfExtension?
+      return AuthGenerateOptionExtension(prf)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      prf,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other !is AuthGenerateOptionExtension) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    return MessagesPigeonUtils.deepEquals(toList(), other.toList())  }
+
+  override fun hashCode(): Int = toList().hashCode()
+}
+
+/**
+ * Represents PRF extension data
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+@Serializable
+data class  PrfExtension (
+  /** PRF evaluation point (optional) */
+  val eval: PrfExtensionEval? = null,
+  /** PRF evaluation by credential ID (optional) */
+  val evalByCredential: Map<String, PrfExtensionEval?>? = null,
+  /** Enabled flag (for registration) */
+  val enabled: Boolean? = null
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): PrfExtension {
+      val eval = pigeonVar_list[0] as PrfExtensionEval?
+      val evalByCredential = pigeonVar_list[1] as Map<String, PrfExtensionEval?>?
+      val enabled = pigeonVar_list[2] as Boolean?
+      return PrfExtension(eval, evalByCredential, enabled)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      eval,
+      evalByCredential,
+      enabled,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other !is PrfExtension) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    return MessagesPigeonUtils.deepEquals(toList(), other.toList())  }
+
+  override fun hashCode(): Int = toList().hashCode()
+}
+
+/**
+ * Represents PRF evaluation parameters
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+@Serializable
+data class  PrfExtensionEval (
+  /** First salt (Base64URL encoded) */
+  val first: String,
+  /** Second salt (Base64URL encoded, optional) */
+  val second: String? = null
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): PrfExtensionEval {
+      val first = pigeonVar_list[0] as String
+      val second = pigeonVar_list[1] as String?
+      return PrfExtensionEval(first, second)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      first,
+      second,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other !is PrfExtensionEval) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    return MessagesPigeonUtils.deepEquals(toList(), other.toList())  }
+
+  override fun hashCode(): Int = toList().hashCode()
+}
+
+/**
  * Represents the response data for authentication generation options
  *
  * Generated class from Pigeon that represents data sent in messages.
@@ -175,7 +289,9 @@ data class  AuthGenerateOptionResponseData (
   /** Timeout value in milliseconds */
   val timeout: Long,
   /** User verification requirement */
-  val userVerification: String
+  val userVerification: String,
+  /** Extensions for authentication */
+  val extensions: AuthGenerateOptionExtension? = null
 )
  {
   companion object {
@@ -185,7 +301,8 @@ data class  AuthGenerateOptionResponseData (
       val allowCredentials = pigeonVar_list[2] as List<AuthGenerateOptionAllowCredential>
       val timeout = pigeonVar_list[3] as Long
       val userVerification = pigeonVar_list[4] as String
-      return AuthGenerateOptionResponseData(rpId, challenge, allowCredentials, timeout, userVerification)
+      val extensions = pigeonVar_list[5] as AuthGenerateOptionExtension?
+      return AuthGenerateOptionResponseData(rpId, challenge, allowCredentials, timeout, userVerification, extensions)
     }
   }
   fun toList(): List<Any?> {
@@ -195,6 +312,7 @@ data class  AuthGenerateOptionResponseData (
       allowCredentials,
       timeout,
       userVerification,
+      extensions,
     )
   }
   override fun equals(other: Any?): Boolean {
@@ -501,18 +619,22 @@ data class  CreatePasskeyExtension (
 @Serializable
 data class  CreatePasskeyExtensionPrf (
   /** Enabled flag */
-  val rk: Boolean
+  val enabled: Boolean,
+  /** Results of PRF evaluation */
+  val results: PrfExtensionEval? = null
 )
  {
   companion object {
     fun fromList(pigeonVar_list: List<Any?>): CreatePasskeyExtensionPrf {
-      val rk = pigeonVar_list[0] as Boolean
-      return CreatePasskeyExtensionPrf(rk)
+      val enabled = pigeonVar_list[0] as Boolean
+      val results = pigeonVar_list[1] as PrfExtensionEval?
+      return CreatePasskeyExtensionPrf(enabled, results)
     }
   }
   fun toList(): List<Any?> {
     return listOf(
-      rk,
+      enabled,
+      results,
     )
   }
   override fun equals(other: Any?): Boolean {
@@ -579,7 +701,9 @@ data class  GetPasskeyAuthenticationResponseData (
   /** Type of credential */
   val type: String,
   /** Username associated with the passkey */
-  val username: String
+  val username: String,
+  /** Client extension results */
+  val clientExtensionResults: CreatePasskeyExtension
 )
  {
   companion object {
@@ -590,7 +714,8 @@ data class  GetPasskeyAuthenticationResponseData (
       val response = pigeonVar_list[3] as GetPasskeyAuthenticationResponse
       val type = pigeonVar_list[4] as String
       val username = pigeonVar_list[5] as String
-      return GetPasskeyAuthenticationResponseData(authenticatorAttachment, id, rawId, response, type, username)
+      val clientExtensionResults = pigeonVar_list[6] as CreatePasskeyExtension
+      return GetPasskeyAuthenticationResponseData(authenticatorAttachment, id, rawId, response, type, username, clientExtensionResults)
     }
   }
   fun toList(): List<Any?> {
@@ -601,6 +726,7 @@ data class  GetPasskeyAuthenticationResponseData (
       response,
       type,
       username,
+      clientExtensionResults,
     )
   }
   override fun equals(other: Any?): Boolean {
@@ -941,18 +1067,22 @@ data class  RegisterGenerateOptionAuthenticatorSelection (
 @Serializable
 data class  RegisterGenerateOptionExtension (
   /** Credential properties extension */
-  val credProps: Boolean
+  val credProps: Boolean,
+  /** PRF extension */
+  val prf: PrfExtension? = null
 )
  {
   companion object {
     fun fromList(pigeonVar_list: List<Any?>): RegisterGenerateOptionExtension {
       val credProps = pigeonVar_list[0] as Boolean
-      return RegisterGenerateOptionExtension(credProps)
+      val prf = pigeonVar_list[1] as PrfExtension?
+      return RegisterGenerateOptionExtension(credProps, prf)
     }
   }
   fun toList(): List<Any?> {
     return listOf(
       credProps,
+      prf,
     )
   }
   override fun equals(other: Any?): Boolean {
@@ -1120,6 +1250,21 @@ private open class MessagesPigeonCodec : StandardMessageCodec() {
           RegisterVerifyResponse.fromList(it)
         }
       }
+      150.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          AuthGenerateOptionExtension.fromList(it)
+        }
+      }
+      151.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          PrfExtension.fromList(it)
+        }
+      }
+      152.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          PrfExtensionEval.fromList(it)
+        }
+      }
       else -> super.readValueOfType(type, buffer)
     }
   }
@@ -1207,6 +1352,18 @@ private open class MessagesPigeonCodec : StandardMessageCodec() {
       }
       is RegisterVerifyResponse -> {
         stream.write(149)
+        writeValue(stream, value.toList())
+      }
+      is AuthGenerateOptionExtension -> {
+        stream.write(150)
+        writeValue(stream, value.toList())
+      }
+      is PrfExtension -> {
+        stream.write(151)
+        writeValue(stream, value.toList())
+      }
+      is PrfExtensionEval -> {
+        stream.write(152)
         writeValue(stream, value.toList())
       }
       else -> super.writeValue(stream, value)

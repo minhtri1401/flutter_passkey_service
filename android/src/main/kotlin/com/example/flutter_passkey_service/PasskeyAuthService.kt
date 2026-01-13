@@ -220,7 +220,8 @@ class PasskeyAuthServiceImpl(private val credentialManager: CredentialManager) :
             rawId = jsonElement["rawId"]!!.jsonPrimitive.content,
             response = parseGetPasskeyResponse(jsonElement["response"]!!.jsonObject),
             type = jsonElement["type"]!!.jsonPrimitive.content,
-            username = jsonElement["username"]?.jsonPrimitive?.content ?: "username"
+            username = jsonElement["username"]?.jsonPrimitive?.content ?: "username",
+            clientExtensionResults = parseCreatePasskeyExtension(jsonElement["clientExtensionResults"]?.jsonObject ?: buildJsonObject {})
         )
     }
 
@@ -241,6 +242,30 @@ class PasskeyAuthServiceImpl(private val credentialManager: CredentialManager) :
             }
             put("timeout", request.timeout)
             put("userVerification", request.userVerification)
+            request.extensions?.prf?.let { prf ->
+                putJsonObject("extensions") {
+                    putJsonObject("prf") {
+                        if (prf.eval != null) {
+                            putJsonObject("eval") {
+                                put("first", prf.eval!!.first)
+                                prf.eval!!.second?.let { put("second", it) }
+                            }
+                        }
+                        if (prf.evalByCredential != null) {
+                            putJsonObject("evalByCredential") {
+                                prf.evalByCredential!!.forEach { (key, value) ->
+                                    if (value != null) {
+                                        putJsonObject(key) {
+                                            put("first", value.first)
+                                            value.second?.let { put("second", it) }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }.toString()
     }
 
@@ -297,6 +322,28 @@ class PasskeyAuthServiceImpl(private val credentialManager: CredentialManager) :
             }
             putJsonObject("extensions") {
                 put("credProps", option.extensions.credProps)
+                option.extensions.prf?.let { prf ->
+                    putJsonObject("prf") {
+                        if (prf.eval != null) {
+                            putJsonObject("eval") {
+                                put("first", prf.eval!!.first)
+                                prf.eval!!.second?.let { put("second", it) }
+                            }
+                        }
+                        if (prf.evalByCredential != null) {
+                            putJsonObject("evalByCredential") {
+                                prf.evalByCredential!!.forEach { (key, value) ->
+                                    if (value != null) {
+                                        putJsonObject(key) {
+                                            put("first", value.first)
+                                            value.second?.let { put("second", it) }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }.toString()
     }
@@ -326,7 +373,13 @@ class PasskeyAuthServiceImpl(private val credentialManager: CredentialManager) :
     
     private fun parseCreatePasskeyExtensionPrf(json: JsonObject): CreatePasskeyExtensionPrf {
         return CreatePasskeyExtensionPrf(
-            rk = json["rk"]!!.jsonPrimitive.boolean
+            enabled = json["enabled"]?.jsonPrimitive?.boolean ?: false,
+            results = json["results"]?.jsonObject?.let { resultsJson ->
+                PrfExtensionEval(
+                    first = resultsJson["first"]!!.jsonPrimitive.content,
+                    second = resultsJson["second"]?.jsonPrimitive?.content
+                )
+            }
         )
     }
     

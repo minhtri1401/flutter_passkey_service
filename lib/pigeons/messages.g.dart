@@ -118,6 +118,136 @@ class PasskeyException {
   int get hashCode => Object.hashAll(_toList());
 }
 
+/// Represents extensions for authentication
+class AuthGenerateOptionExtension {
+  AuthGenerateOptionExtension({this.prf});
+
+  /// PRF extension
+  PrfExtension? prf;
+
+  List<Object?> _toList() {
+    return <Object?>[prf];
+  }
+
+  Object encode() {
+    return _toList();
+  }
+
+  static AuthGenerateOptionExtension decode(Object result) {
+    result as List<Object?>;
+    return AuthGenerateOptionExtension(prf: result[0] as PrfExtension?);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! AuthGenerateOptionExtension ||
+        other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(encode(), other.encode());
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => Object.hashAll(_toList());
+}
+
+/// Represents PRF extension data
+class PrfExtension {
+  PrfExtension({this.eval, this.evalByCredential, this.enabled});
+
+  /// PRF evaluation point (optional)
+  PrfExtensionEval? eval;
+
+  /// PRF evaluation by credential ID (optional)
+  Map<String, PrfExtensionEval?>? evalByCredential;
+
+  /// Enabled flag (for registration)
+  bool? enabled;
+
+  List<Object?> _toList() {
+    return <Object?>[eval, evalByCredential, enabled];
+  }
+
+  Object encode() {
+    return _toList();
+  }
+
+  static PrfExtension decode(Object result) {
+    result as List<Object?>;
+    return PrfExtension(
+      eval: result[0] as PrfExtensionEval?,
+      evalByCredential:
+          (result[1] as Map<Object?, Object?>?)
+              ?.cast<String, PrfExtensionEval?>(),
+      enabled: result[2] as bool?,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! PrfExtension || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(encode(), other.encode());
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => Object.hashAll(_toList());
+}
+
+/// Represents PRF evaluation parameters
+class PrfExtensionEval {
+  PrfExtensionEval({required this.first, this.second});
+
+  /// First salt (Base64URL encoded)
+  String first;
+
+  /// Second salt (Base64URL encoded, optional)
+  String? second;
+
+  List<Object?> _toList() {
+    return <Object?>[first, second];
+  }
+
+  Object encode() {
+    return _toList();
+  }
+
+  static PrfExtensionEval decode(Object result) {
+    result as List<Object?>;
+    return PrfExtensionEval(
+      first: result[0]! as String,
+      second: result[1] as String?,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! PrfExtensionEval || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(encode(), other.encode());
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => Object.hashAll(_toList());
+}
+
 /// Represents the response data for authentication generation options
 class AuthGenerateOptionResponseData {
   AuthGenerateOptionResponseData({
@@ -143,6 +273,9 @@ class AuthGenerateOptionResponseData {
   /// User verification requirement
   String userVerification;
 
+  /// Extensions for authentication
+  AuthGenerateOptionExtension? extensions;
+
   List<Object?> _toList() {
     return <Object?>[
       rpId,
@@ -150,6 +283,7 @@ class AuthGenerateOptionResponseData {
       allowCredentials,
       timeout,
       userVerification,
+      extensions,
     ];
   }
 
@@ -166,6 +300,7 @@ class AuthGenerateOptionResponseData {
           .cast<AuthGenerateOptionAllowCredential>(),
       timeout: result[3]! as int,
       userVerification: result[4]! as String,
+      extensions: result[5] as AuthGenerateOptionExtension?,
     );
   }
 
@@ -544,13 +679,16 @@ class CreatePasskeyExtension {
 
 /// Represents PRF extension properties
 class CreatePasskeyExtensionPrf {
-  CreatePasskeyExtensionPrf({required this.rk});
+  CreatePasskeyExtensionPrf({required this.enabled, this.results});
 
   /// Enabled flag
-  bool rk;
+  bool enabled;
+
+  /// Results of PRF evaluation
+  PrfExtensionEval? results;
 
   List<Object?> _toList() {
-    return <Object?>[rk];
+    return <Object?>[enabled, results];
   }
 
   Object encode() {
@@ -559,7 +697,10 @@ class CreatePasskeyExtensionPrf {
 
   static CreatePasskeyExtensionPrf decode(Object result) {
     result as List<Object?>;
-    return CreatePasskeyExtensionPrf(rk: result[0]! as bool);
+    return CreatePasskeyExtensionPrf(
+      enabled: result[0]! as bool,
+      results: result[1] as PrfExtensionEval?,
+    );
   }
 
   @override
@@ -627,6 +768,7 @@ class GetPasskeyAuthenticationResponseData {
     required this.response,
     required this.type,
     this.username = 'username',
+    required this.clientExtensionResults,
   });
 
   /// Authenticator attachment type
@@ -647,6 +789,9 @@ class GetPasskeyAuthenticationResponseData {
   /// Username associated with the passkey
   String username;
 
+  /// Client extension results
+  CreatePasskeyExtension clientExtensionResults;
+
   List<Object?> _toList() {
     return <Object?>[
       authenticatorAttachment,
@@ -655,6 +800,7 @@ class GetPasskeyAuthenticationResponseData {
       response,
       type,
       username,
+      clientExtensionResults,
     ];
   }
 
@@ -671,6 +817,7 @@ class GetPasskeyAuthenticationResponseData {
       response: result[3]! as GetPasskeyAuthenticationResponse,
       type: result[4]! as String,
       username: result[5]! as String,
+      clientExtensionResults: result[6]! as CreatePasskeyExtension,
     );
   }
 
@@ -1103,13 +1250,16 @@ class RegisterGenerateOptionAuthenticatorSelection {
 
 /// Represents extensions for registration
 class RegisterGenerateOptionExtension {
-  RegisterGenerateOptionExtension({required this.credProps});
+  RegisterGenerateOptionExtension({required this.credProps, this.prf});
 
   /// Credential properties extension
   bool credProps;
 
+  /// PRF extension
+  PrfExtension? prf;
+
   List<Object?> _toList() {
-    return <Object?>[credProps];
+    return <Object?>[credProps, prf];
   }
 
   Object encode() {
@@ -1118,7 +1268,10 @@ class RegisterGenerateOptionExtension {
 
   static RegisterGenerateOptionExtension decode(Object result) {
     result as List<Object?>;
-    return RegisterGenerateOptionExtension(credProps: result[0]! as bool);
+    return RegisterGenerateOptionExtension(
+      credProps: result[0]! as bool,
+      prf: result[1] as PrfExtension?,
+    );
   }
 
   @override
@@ -1265,6 +1418,15 @@ class _PigeonCodec extends StandardMessageCodec {
     } else if (value is RegisterVerifyResponse) {
       buffer.putUint8(149);
       writeValue(buffer, value.encode());
+    } else if (value is AuthGenerateOptionExtension) {
+      buffer.putUint8(150);
+      writeValue(buffer, value.encode());
+    } else if (value is PrfExtension) {
+      buffer.putUint8(151);
+      writeValue(buffer, value.encode());
+    } else if (value is PrfExtensionEval) {
+      buffer.putUint8(152);
+      writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
     }
@@ -1320,6 +1482,12 @@ class _PigeonCodec extends StandardMessageCodec {
         return RegisterGenerateOptionExtension.decode(readValue(buffer)!);
       case 149:
         return RegisterVerifyResponse.decode(readValue(buffer)!);
+      case 150:
+        return AuthGenerateOptionExtension.decode(readValue(buffer)!);
+      case 151:
+        return PrfExtension.decode(readValue(buffer)!);
+      case 152:
+        return PrfExtensionEval.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
     }

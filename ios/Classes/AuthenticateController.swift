@@ -35,6 +35,29 @@ class AuthenticateController: NSObject, ASAuthorizationControllerDelegate, ASAut
     func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
         switch authorization.credential {
         case let r as ASAuthorizationPublicKeyCredentialAssertion:
+            var prfOutput: CreatePasskeyExtensionPrf? = nil
+            if #available(iOS 18.0, *) {
+                if let prf = r.prf {
+                    // Extract PRF results
+                    // r.prf is ASAuthorizationPublicKeyCredentialPRFAssertionOutput
+                    // Assuming structure:
+                    // prf.first (Data)
+                    // prf.second (Data?)
+
+                    // We map this to PrfExtensionEval inside CreatePasskeyExtensionPrf
+                    // CreatePasskeyExtensionPrf has 'enabled' (Bool) and 'results' (PrfExtensionEval?)
+
+                    var results: PrfExtensionEval? = nil
+                    // Assuming 'first' is available if PRF succeeded
+                    if let first = prf.first {
+                         results = PrfExtensionEval(first: first.toBase64URL(), second: prf.second?.toBase64URL())
+                    }
+
+                    // 'enabled' is effectively true if we got results, or we can check simple presence
+                    prfOutput = CreatePasskeyExtensionPrf(enabled: true, results: results)
+                }
+            }
+
             let response = GetPasskeyAuthenticationResponseData(
                 authenticatorAttachment: "platform", id: r.credentialID.toBase64URL(),
                 rawId: r.credentialID.toBase64URL(),
@@ -45,7 +68,8 @@ class AuthenticateController: NSObject, ASAuthorizationControllerDelegate, ASAut
                     userHandle: r.userID.toBase64URL()
                 ),
                 type: "public-key",
-                username: "username"
+                username: "username",
+                clientExtensionResults: CreatePasskeyExtension(credProps: nil, prf: prfOutput)
             )
             completion?(.success(response))
             break

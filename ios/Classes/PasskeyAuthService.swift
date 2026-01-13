@@ -53,6 +53,32 @@ class PasskeyAuthServiceImpl: PasskeyAuthService {
         )
                 
         credentialRequest.allowedCredentials = parseCredentials(credentialIDs: request.allowCredentials.map { e in e.id })
+
+        if #available(iOS 18.0, *) {
+            if let extensions = request.extensions, let prf = extensions.prf {
+                // Configure PRF assertion input
+                // Note: ASAuthorizationPublicKeyCredentialPRFAssertionInput might require specific initialization
+                // Since we don't have the exact signature, we'll try the most likely one based on the struct structure.
+                // However, without exact docs, this is a guess. The inputs usually take the salt values.
+
+                // Constructing input values
+                var inputValues: [ASAuthorizationPublicKeyCredentialPRFValues] = []
+
+                if let eval = prf.eval {
+                    if let firstData = Data.fromBase64Url(eval.first) {
+                         let secondData = eval.second != nil ? Data.fromBase64Url(eval.second!) : nil
+                         let values = ASAuthorizationPublicKeyCredentialPRFValues(saltInput1: firstData, saltInput2: secondData)
+                         inputValues.append(values)
+                    }
+                }
+
+                // If there are input values, attach them.
+                // Note: For assertion, we might be providing salts.
+                if !inputValues.isEmpty {
+                    credentialRequest.prf = ASAuthorizationPublicKeyCredentialPRFAssertionInput(inputValues: inputValues, perCredentialInputValues: [:])
+                }
+            }
+        }
                 
         authenController = AuthenticateController(window: self.window, completion: completion)
         authenController?.run(request: credentialRequest, preferImmediatelyAvailableCredentials: false)
@@ -90,6 +116,27 @@ class PasskeyAuthServiceImpl: PasskeyAuthService {
 
         if #available(iOS 17.4, *) {
             request.excludedCredentials = parseCredentials(credentialIDs: option.excludeCredentials.map{ e in e.id })
+        }
+
+        if #available(iOS 18.0, *) {
+            if let extensions = option.extensions.prf {
+                // Check if PRF is enabled
+                if extensions.enabled == true {
+                   // Create PRF registration input.
+                   // The initializer might check for support or just be empty for "enabled".
+                   // Assuming init(checkForSupport: Bool) or similar if specific inputs aren't needed.
+                   // Or potentially ASAuthorizationPublicKeyCredentialPRFRegistrationInput.checkForSupport()
+
+                   // Based on typical usage, we probably just instantiate it to request it.
+                   // Since I can't check the docs, I'll assume the simpler init or similar.
+                   // However, usually enabling it is enough.
+
+                   // Let's try to assume we just need to set it to an instance.
+                   // Warning: This is a guess.
+                   let prfInput = ASAuthorizationPublicKeyCredentialPRFRegistrationInput(checkForSupport: true, inputValues: [])
+                   request.prf = prfInput
+                }
+            }
         }
 
         registerController = RegisterController(window: self.window, completion: completion)

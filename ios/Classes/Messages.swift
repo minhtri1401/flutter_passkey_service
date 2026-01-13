@@ -214,6 +214,8 @@ struct AuthGenerateOptionResponseData: Hashable {
   var timeout: Int64
   /// User verification requirement
   var userVerification: String
+  /// Extensions for authentication
+  var extensions: AuthGenerateOptionExtension? = nil
 
 
   // swift-format-ignore: AlwaysUseLowerCamelCase
@@ -223,13 +225,15 @@ struct AuthGenerateOptionResponseData: Hashable {
     let allowCredentials = pigeonVar_list[2] as! [AuthGenerateOptionAllowCredential]
     let timeout = pigeonVar_list[3] as! Int64
     let userVerification = pigeonVar_list[4] as! String
+    let extensions: AuthGenerateOptionExtension? = nilOrValue(pigeonVar_list[5])
 
     return AuthGenerateOptionResponseData(
       rpId: rpId,
       challenge: challenge,
       allowCredentials: allowCredentials,
       timeout: timeout,
-      userVerification: userVerification
+      userVerification: userVerification,
+      extensions: extensions
     )
   }
   func toList() -> [Any?] {
@@ -239,6 +243,7 @@ struct AuthGenerateOptionResponseData: Hashable {
       allowCredentials,
       timeout,
       userVerification,
+      extensions,
     ]
   }
   static func == (lhs: AuthGenerateOptionResponseData, rhs: AuthGenerateOptionResponseData) -> Bool {
@@ -323,6 +328,105 @@ struct AuthVerifyResponse: Hashable {
     ]
   }
   static func == (lhs: AuthVerifyResponse, rhs: AuthVerifyResponse) -> Bool {
+    return deepEqualsMessages(lhs.toList(), rhs.toList())  }
+  func hash(into hasher: inout Hasher) {
+    deepHashMessages(value: toList(), hasher: &hasher)
+  }
+}
+
+/// Represents extensions for authentication
+///
+/// Generated class from Pigeon that represents data sent in messages.
+struct AuthGenerateOptionExtension: Hashable {
+  /// PRF extension
+  var prf: PrfExtension? = nil
+
+
+  // swift-format-ignore: AlwaysUseLowerCamelCase
+  static func fromList(_ pigeonVar_list: [Any?]) -> AuthGenerateOptionExtension? {
+    let prf: PrfExtension? = nilOrValue(pigeonVar_list[0])
+
+    return AuthGenerateOptionExtension(
+      prf: prf
+    )
+  }
+  func toList() -> [Any?] {
+    return [
+      prf
+    ]
+  }
+  static func == (lhs: AuthGenerateOptionExtension, rhs: AuthGenerateOptionExtension) -> Bool {
+    return deepEqualsMessages(lhs.toList(), rhs.toList())  }
+  func hash(into hasher: inout Hasher) {
+    deepHashMessages(value: toList(), hasher: &hasher)
+  }
+}
+
+/// Represents PRF extension data
+///
+/// Generated class from Pigeon that represents data sent in messages.
+struct PrfExtension: Hashable {
+  /// PRF evaluation point (optional)
+  var eval: PrfExtensionEval? = nil
+  /// PRF evaluation by credential ID (optional)
+  var evalByCredential: [String: PrfExtensionEval?]? = nil
+  /// Enabled flag (for registration)
+  var enabled: Bool? = nil
+
+
+  // swift-format-ignore: AlwaysUseLowerCamelCase
+  static func fromList(_ pigeonVar_list: [Any?]) -> PrfExtension? {
+    let eval: PrfExtensionEval? = nilOrValue(pigeonVar_list[0])
+    let evalByCredential: [String: PrfExtensionEval?]? = nilOrValue(pigeonVar_list[1])
+    let enabled: Bool? = nilOrValue(pigeonVar_list[2])
+
+    return PrfExtension(
+      eval: eval,
+      evalByCredential: evalByCredential,
+      enabled: enabled
+    )
+  }
+  func toList() -> [Any?] {
+    return [
+      eval,
+      evalByCredential,
+      enabled,
+    ]
+  }
+  static func == (lhs: PrfExtension, rhs: PrfExtension) -> Bool {
+    return deepEqualsMessages(lhs.toList(), rhs.toList())  }
+  func hash(into hasher: inout Hasher) {
+    deepHashMessages(value: toList(), hasher: &hasher)
+  }
+}
+
+/// Represents PRF evaluation parameters
+///
+/// Generated class from Pigeon that represents data sent in messages.
+struct PrfExtensionEval: Hashable {
+  /// First salt (Base64URL encoded)
+  var first: String
+  /// Second salt (Base64URL encoded, optional)
+  var second: String? = nil
+
+
+  // swift-format-ignore: AlwaysUseLowerCamelCase
+  static func fromList(_ pigeonVar_list: [Any?]) -> PrfExtensionEval? {
+    let first = pigeonVar_list[0] as! String
+    let second: String? = nilOrValue(pigeonVar_list[1])
+
+    return PrfExtensionEval(
+      first: first,
+      second: second
+    )
+  }
+  func toList() -> [Any?] {
+    return [
+      first,
+      second,
+    ]
+  }
+  static func == (lhs: PrfExtensionEval, rhs: PrfExtensionEval) -> Bool {
     return deepEqualsMessages(lhs.toList(), rhs.toList())  }
   func hash(into hasher: inout Hasher) {
     deepHashMessages(value: toList(), hasher: &hasher)
@@ -521,20 +625,25 @@ struct CreatePasskeyExtension: Hashable {
 /// Generated class from Pigeon that represents data sent in messages.
 struct CreatePasskeyExtensionPrf: Hashable {
   /// Enabled flag
-  var rk: Bool
+  var enabled: Bool
+  /// Results of PRF evaluation
+  var results: PrfExtensionEval? = nil
 
 
   // swift-format-ignore: AlwaysUseLowerCamelCase
   static func fromList(_ pigeonVar_list: [Any?]) -> CreatePasskeyExtensionPrf? {
-    let rk = pigeonVar_list[0] as! Bool
+    let enabled = pigeonVar_list[0] as! Bool
+    let results: PrfExtensionEval? = nilOrValue(pigeonVar_list[1])
 
     return CreatePasskeyExtensionPrf(
-      rk: rk
+      enabled: enabled,
+      results: results
     )
   }
   func toList() -> [Any?] {
     return [
-      rk
+      enabled,
+      results,
     ]
   }
   static func == (lhs: CreatePasskeyExtensionPrf, rhs: CreatePasskeyExtensionPrf) -> Bool {
@@ -588,6 +697,8 @@ struct GetPasskeyAuthenticationResponseData: Hashable {
   var type: String
   /// Username associated with the passkey
   var username: String
+  /// Client extension results
+  var clientExtensionResults: CreatePasskeyExtension
 
 
   // swift-format-ignore: AlwaysUseLowerCamelCase
@@ -598,6 +709,7 @@ struct GetPasskeyAuthenticationResponseData: Hashable {
     let response = pigeonVar_list[3] as! GetPasskeyAuthenticationResponse
     let type = pigeonVar_list[4] as! String
     let username = pigeonVar_list[5] as! String
+    let clientExtensionResults = pigeonVar_list[6] as! CreatePasskeyExtension
 
     return GetPasskeyAuthenticationResponseData(
       authenticatorAttachment: authenticatorAttachment,
@@ -605,7 +717,8 @@ struct GetPasskeyAuthenticationResponseData: Hashable {
       rawId: rawId,
       response: response,
       type: type,
-      username: username
+      username: username,
+      clientExtensionResults: clientExtensionResults
     )
   }
   func toList() -> [Any?] {
@@ -616,6 +729,7 @@ struct GetPasskeyAuthenticationResponseData: Hashable {
       response,
       type,
       username,
+      clientExtensionResults,
     ]
   }
   static func == (lhs: GetPasskeyAuthenticationResponseData, rhs: GetPasskeyAuthenticationResponseData) -> Bool {
@@ -927,19 +1041,24 @@ struct RegisterGenerateOptionAuthenticatorSelection: Hashable {
 struct RegisterGenerateOptionExtension: Hashable {
   /// Credential properties extension
   var credProps: Bool
+  /// PRF extension
+  var prf: PrfExtension? = nil
 
 
   // swift-format-ignore: AlwaysUseLowerCamelCase
   static func fromList(_ pigeonVar_list: [Any?]) -> RegisterGenerateOptionExtension? {
     let credProps = pigeonVar_list[0] as! Bool
+    let prf: PrfExtension? = nilOrValue(pigeonVar_list[1])
 
     return RegisterGenerateOptionExtension(
-      credProps: credProps
+      credProps: credProps,
+      prf: prf
     )
   }
   func toList() -> [Any?] {
     return [
-      credProps
+      credProps,
+      prf,
     ]
   }
   static func == (lhs: RegisterGenerateOptionExtension, rhs: RegisterGenerateOptionExtension) -> Bool {
@@ -1041,6 +1160,12 @@ private class MessagesPigeonCodecReader: FlutterStandardReader {
       return RegisterGenerateOptionExtension.fromList(self.readValue() as! [Any?])
     case 149:
       return RegisterVerifyResponse.fromList(self.readValue() as! [Any?])
+    case 150:
+      return AuthGenerateOptionExtension.fromList(self.readValue() as! [Any?])
+    case 151:
+      return PrfExtension.fromList(self.readValue() as! [Any?])
+    case 152:
+      return PrfExtensionEval.fromList(self.readValue() as! [Any?])
     default:
       return super.readValue(ofType: type)
     }
@@ -1111,6 +1236,15 @@ private class MessagesPigeonCodecWriter: FlutterStandardWriter {
       super.writeValue(value.toList())
     } else if let value = value as? RegisterVerifyResponse {
       super.writeByte(149)
+      super.writeValue(value.toList())
+    } else if let value = value as? AuthGenerateOptionExtension {
+      super.writeByte(150)
+      super.writeValue(value.toList())
+    } else if let value = value as? PrfExtension {
+      super.writeByte(151)
+      super.writeValue(value.toList())
+    } else if let value = value as? PrfExtensionEval {
+      super.writeByte(152)
       super.writeValue(value.toList())
     } else {
       super.writeValue(value)
