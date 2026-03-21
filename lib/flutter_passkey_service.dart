@@ -45,6 +45,11 @@ class FlutterPasskeyService {
   }
 
   /// Helper method to create registration options
+  /// Recommended KEK Derivation Flow:
+  /// 1. Register a new passkey with [enablePrf] = true.
+  /// 2. Check the [RegisterResponseData.clientExtensionResults.prf.enabled] flag to verify PRF support.
+  /// 3. Upon future authentications, construct a salt and pass it via PRF extension inputs.
+  /// 4. Extract the derived base64 array as a symmetric Key Encryption Key (KEK) via [AuthPasskeyExtensionResult].
   static RegisterGenerateOptionData createRegistrationOptions({
     required String challenge,
     required String rpName,
@@ -52,6 +57,7 @@ class FlutterPasskeyService {
     required String userId,
     required String username,
     String displayName = '',
+    bool enablePrf = false,
     int timeout = 60000,
     String attestation = 'none',
     List<RegisterGenerateOptionExcludeCredential> excludeCredentials = const [],
@@ -84,7 +90,10 @@ class FlutterPasskeyService {
         requireResidentKey: false,
         authenticatorAttachment: authenticatorAttachment,
       ),
-      extensions: RegisterGenerateOptionExtension(credProps: true),
+      extensions: RegisterGenerateOptionExtension(
+        credProps: true,
+        prf: enablePrf ? PrfExtensionInput(eval: null) : null,
+      ),
     );
   }
 
@@ -189,7 +198,11 @@ class FlutterPasskeyService {
       ),
       extensions: RegisterGenerateOptionExtension(
         credProps: json['extensions']?['credProps'] as bool? ?? true,
+        prf: _parsePrfExtensionInput(json['extensions']?['prf']),
       ),
+      hints: (json['hints'] as List<dynamic>?)?.cast<String>(),
+      attestationFormats:
+          (json['attestationFormats'] as List<dynamic>?)?.cast<String>(),
     );
   }
 
@@ -232,6 +245,14 @@ class FlutterPasskeyService {
           [],
       timeout: json['timeout'] as int? ?? 60000,
       userVerification: json['userVerification'] as String? ?? 'required',
+      hints: (json['hints'] as List<dynamic>?)?.cast<String>(),
+      extensions:
+          json['extensions'] != null
+              ? AuthGenerateOptionExtension(
+                appid: json['extensions']['appid'] as bool?,
+                prf: _parsePrfExtensionInput(json['extensions']['prf']),
+              )
+              : null,
     );
   }
 
@@ -274,6 +295,21 @@ class FlutterPasskeyService {
           json['authenticatorAttachment'] as String? ?? 'platform',
     );
   }
+
+  /// Helper method to parse PRF extension input from JSON
+  static PrfExtensionInput? _parsePrfExtensionInput(dynamic prfJson) {
+    if (prfJson == null) return null;
+    if (prfJson is Map) {
+      final evalJson = prfJson['eval'] as Map?;
+      if (evalJson != null) {
+        return PrfExtensionInput(
+          eval: evalJson.map((key, value) => MapEntry(key.toString(), value?.toString())),
+        );
+      }
+      return PrfExtensionInput(); // Empty PRF for credential creation enablement tests
+    }
+    return null;
+  }
 }
 
 /// Extension methods for convenient JSON serialization
@@ -311,7 +347,15 @@ extension RegisterGenerateOptionDataExtension on RegisterGenerateOptionData {
         'authenticatorAttachment':
             authenticatorSelection.authenticatorAttachment,
       },
-      'extensions': {'credProps': extensions.credProps},
+      'extensions': {
+        'credProps': extensions.credProps,
+        if (extensions.prf != null && extensions.prf!.eval != null)
+          'prf': {'eval': extensions.prf!.eval},
+        if (extensions.prf != null && extensions.prf!.eval == null)
+          'prf': {}, // Enable PRF on creation
+      },
+      if (hints != null) 'hints': hints,
+      if (attestationFormats != null) 'attestationFormats': attestationFormats,
     };
   }
 
@@ -340,6 +384,14 @@ extension AuthGenerateOptionResponseDataExtension
           .toList(),
       'timeout': timeout,
       'userVerification': userVerification,
+      if (hints != null) 'hints': hints,
+      if (extensions != null) 'extensions': {
+        if (extensions!.appid != null) 'appid': extensions!.appid,
+        if (extensions!.prf != null && extensions!.prf!.eval != null)
+          'prf': {'eval': extensions!.prf!.eval},
+        if (extensions!.prf != null && extensions!.prf!.eval == null)
+          'prf': {},
+      },
     };
   }
 

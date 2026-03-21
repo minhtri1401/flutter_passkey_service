@@ -23,6 +23,13 @@ class RegisterController: NSObject, ASAuthorizationControllerDelegate, ASAuthori
     func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
         switch authorization.credential {
         case let r as ASAuthorizationPublicKeyCredentialRegistration:
+            var prfOutput: PrfExtensionOutput? = nil
+            if #available(iOS 18.0, *) {
+                if let platformReg = r as? ASAuthorizationPlatformPublicKeyCredentialRegistration, let prfResult = platformReg.prf {
+                    prfOutput = PrfExtensionOutput(enabled: prfResult.isSupported, results: nil)
+                }
+            }
+            
             let response = CreatePasskeyResponseData(
                 rawId: r.credentialID.toBase64URL(),
                 authenticatorAttachment: "platform",
@@ -38,7 +45,7 @@ class RegisterController: NSObject, ASAuthorizationControllerDelegate, ASAuthori
                 ),
                 clientExtensionResults: CreatePasskeyExtension(
                     credProps: nil,
-                    prf: nil
+                    prf: prfOutput
                 ),
                 username: "username"
             )

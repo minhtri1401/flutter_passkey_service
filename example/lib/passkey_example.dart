@@ -1,5 +1,6 @@
 // ignore_for_file: use_key_in_widget_constructors
 
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_passkey_service/flutter_passkey_service.dart';
 import 'package:flutter_passkey_service/pigeons/messages.g.dart';
@@ -83,6 +84,52 @@ class _PasskeyExampleState extends State<PasskeyExample> {
       setState(() {
         _status =
             'Authentication successful!\nSignature: ${result.response.signature.substring(0, 20)}...';
+        _isLoading = false;
+      });
+    } catch (e) {
+      _handleError(e);
+    }
+  }
+
+  /// Example: Authenticate and Derive Key Encryption Key (KEK) using PRF
+  Future<void> _deriveKEKWithPasskey() async {
+    setState(() {
+      _isLoading = true;
+      _status = 'Deriving KEK with passkey PRF...';
+    });
+
+    try {
+      // PRF expects exactly 32-byte salts, base64url encoded representations of an ArrayBuffer.
+      // We generate a deterministic 32 random byte array for the example
+      final randomBytes = List<int>.generate(32, (i) => i % 256);
+      final prfSaltObject = base64Url.encode(randomBytes);
+      
+      final request = FlutterPasskeyService.createAuthenticationOptionsFromJson({
+        "challenge": "your-server-generated-challenge",
+        "rpId": "example.com",
+        "extensions": {
+          "prf": {
+            "eval": {
+              "first": prfSaltObject
+            }
+          }
+        }
+      });
+
+      // Authenticate with passkey and execute PRF
+      final result = await FlutterPasskeyService.authenticate(request);
+      
+      final prfResult = result.clientExtensionResults?.prf;
+      String kekMessage = '';
+      if (prfResult != null && prfResult.results != null && prfResult.results!['first'] != null) {
+         kekMessage = '\nKEK Derived: ${prfResult.results!['first']?.substring(0, 15)}...';
+      } else {
+         kekMessage = '\nKEK Not Supported on this passkey. Ensure the passkey was registered with PRF support.';
+      }
+
+      setState(() {
+        _status =
+            'Authentication successful!$kekMessage';
         _isLoading = false;
       });
     } catch (e) {
@@ -196,6 +243,18 @@ class _PasskeyExampleState extends State<PasskeyExample> {
                     )
                   : Icon(Icons.login),
               label: Text('Authenticate with Passkey'),
+            ),
+            SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: _isLoading ? null : _deriveKEKWithPasskey,
+              icon: _isLoading
+                  ? SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Icon(Icons.shield),
+              label: Text('Derive KEK (PRF Extension)'),
             ),
             SizedBox(height: 24),
             Card(

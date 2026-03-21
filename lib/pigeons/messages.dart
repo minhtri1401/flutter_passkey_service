@@ -88,6 +88,8 @@ class AuthGenerateOptionResponseData {
     required this.allowCredentials,
     required this.timeout,
     required this.userVerification,
+    this.hints,
+    this.extensions,
   });
 
   /// The relying party identifier
@@ -104,6 +106,23 @@ class AuthGenerateOptionResponseData {
 
   /// User verification requirement
   String userVerification;
+
+  /// Hints for the authenticator
+  List<String?>? hints;
+
+  /// Extensions for authentication
+  AuthGenerateOptionExtension? extensions;
+}
+
+/// Represents extensions for authentication options
+class AuthGenerateOptionExtension {
+  AuthGenerateOptionExtension({this.appid, this.prf});
+
+  /// AppID extension
+  bool? appid;
+
+  /// PRF extension input parameters
+  PrfExtensionInput? prf;
 }
 
 /// Represents an allowed credential for authentication
@@ -167,7 +186,7 @@ class User {
 class CreatePasskeyResponseData {
   CreatePasskeyResponseData({
     required this.rawId,
-    required this.authenticatorAttachment,
+    this.authenticatorAttachment,
     required this.type,
     required this.id,
     required this.response,
@@ -179,7 +198,7 @@ class CreatePasskeyResponseData {
   String rawId;
 
   /// Authenticator attachment type
-  String authenticatorAttachment;
+  String? authenticatorAttachment;
 
   /// Type of credential
   String type;
@@ -202,10 +221,10 @@ class CreatePasskeyResponse {
   CreatePasskeyResponse({
     required this.clientDataJSON,
     required this.attestationObject,
-    required this.transports,
-    required this.authenticatorData,
-    required this.publicKeyAlgorithm,
-    required this.publicKey,
+    this.transports,
+    this.authenticatorData,
+    this.publicKeyAlgorithm,
+    this.publicKey,
   });
 
   /// Client data JSON
@@ -215,16 +234,16 @@ class CreatePasskeyResponse {
   String attestationObject;
 
   /// List of transport methods
-  List<String> transports;
+  List<String?>? transports;
 
   /// Authenticator data
-  String authenticatorData;
+  String? authenticatorData;
 
   /// Public key algorithm identifier
-  int publicKeyAlgorithm;
+  int? publicKeyAlgorithm;
 
   /// Public key
-  String publicKey;
+  String? publicKey;
 }
 
 /// Represents client extension results for passkey creation
@@ -235,15 +254,7 @@ class CreatePasskeyExtension {
   CreatePasskeyExtensionProps? credProps;
 
   /// PRF extension (optional)
-  CreatePasskeyExtensionPrf? prf;
-}
-
-/// Represents PRF extension properties
-class CreatePasskeyExtensionPrf {
-  CreatePasskeyExtensionPrf({required this.rk});
-
-  /// Enabled flag
-  bool rk;
+  PrfExtensionOutput? prf;
 }
 
 /// Represents credential properties extension
@@ -257,16 +268,17 @@ class CreatePasskeyExtensionProps {
 /// Represents the response data for passkey authentication
 class GetPasskeyAuthenticationResponseData {
   GetPasskeyAuthenticationResponseData({
-    required this.authenticatorAttachment,
+    this.authenticatorAttachment,
     required this.id,
     required this.rawId,
     required this.response,
     required this.type,
+    this.clientExtensionResults,
     this.username = 'username',
   });
 
   /// Authenticator attachment type
-  String authenticatorAttachment;
+  String? authenticatorAttachment;
 
   /// Credential identifier
   String id;
@@ -280,8 +292,22 @@ class GetPasskeyAuthenticationResponseData {
   /// Type of credential
   String type;
 
+  /// Client extension results
+  AuthPasskeyExtensionResult? clientExtensionResults;
+
   /// Username associated with the passkey
   String username;
+}
+
+/// Represents client extension results for passkey authentication
+class AuthPasskeyExtensionResult {
+  AuthPasskeyExtensionResult({this.appid, this.prf});
+
+  /// AppID extension result
+  bool? appid;
+
+  /// PRF extension output results
+  PrfExtensionOutput? prf;
 }
 
 /// Represents the authentication response from passkey
@@ -290,7 +316,7 @@ class GetPasskeyAuthenticationResponse {
     required this.clientDataJSON,
     required this.authenticatorData,
     required this.signature,
-    required this.userHandle,
+    this.userHandle,
   });
 
   /// Client data JSON
@@ -302,8 +328,8 @@ class GetPasskeyAuthenticationResponse {
   /// Digital signature
   String signature;
 
-  /// User handle
-  String userHandle;
+  /// User handle (optional)
+  String? userHandle;
 }
 
 /// Represents the data for generating registration options
@@ -318,6 +344,8 @@ class RegisterGenerateOptionData {
     required this.excludeCredentials,
     required this.authenticatorSelection,
     required this.extensions,
+    this.hints,
+    this.attestationFormats,
   });
 
   /// Challenge string
@@ -346,6 +374,12 @@ class RegisterGenerateOptionData {
 
   /// Extensions for registration
   RegisterGenerateOptionExtension extensions;
+
+  /// Hints for the authenticator
+  List<String?>? hints;
+
+  /// Attestation formats
+  List<String?>? attestationFormats;
 }
 
 /// Represents a credential to exclude from registration
@@ -433,10 +467,13 @@ class RegisterGenerateOptionAuthenticatorSelection {
 
 /// Represents extensions for registration
 class RegisterGenerateOptionExtension {
-  RegisterGenerateOptionExtension({required this.credProps});
+  RegisterGenerateOptionExtension({required this.credProps, this.prf});
 
   /// Credential properties extension
   bool credProps;
+
+  /// PRF extension input parameters
+  PrfExtensionInput? prf;
 }
 
 /// Represents the response data for registration verification
@@ -473,4 +510,26 @@ abstract class PasskeyHostApi {
   GetPasskeyAuthenticationResponseData authenticate(
     AuthGenerateOptionResponseData request,
   );
+}
+
+/// WebAuthn PRF Extension Input payload
+/// The WebAuthn specification stipulates eval dictionaries contain `first` (and optionally `second`)
+/// salt strings. The underlying platform APIs (like Android Credential Manager) expect these Strings
+/// to be Base64URL-encoded representations of a 32-byte ArrayBuffer.
+class PrfExtensionInput {
+  PrfExtensionInput({this.eval});
+
+  /// The dictionary structure containing salts ('first' and optionally 'second')
+  Map<String?, String?>? eval;
+}
+
+/// Represents PRF extension output results
+class PrfExtensionOutput {
+  PrfExtensionOutput({this.enabled, this.results});
+
+  /// Whether PRF is enabled for this credential
+  bool? enabled;
+
+  /// The dictionary structure containing derived salts ('first' and optionally 'second')
+  Map<String?, String?>? results;
 }

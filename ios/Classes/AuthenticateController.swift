@@ -35,6 +35,17 @@ class AuthenticateController: NSObject, ASAuthorizationControllerDelegate, ASAut
     func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
         switch authorization.credential {
         case let r as ASAuthorizationPublicKeyCredentialAssertion:
+            var prfOutput: PrfExtensionOutput? = nil
+            if #available(iOS 18.0, *) {
+                if let platformAssertion = r as? ASAuthorizationPlatformPublicKeyCredentialAssertion, let prfResult = platformAssertion.prf {
+                    prfOutput = PrfExtensionOutput(enabled: nil, results: [:])
+                    prfOutput?.results?["first"] = prfResult.first.withUnsafeBytes { Data($0) }.toBase64URL()
+                    if let second = prfResult.second {
+                        prfOutput?.results?["second"] = second.withUnsafeBytes { Data($0) }.toBase64URL()
+                    }
+                }
+            }
+            
             let response = GetPasskeyAuthenticationResponseData(
                 authenticatorAttachment: "platform", id: r.credentialID.toBase64URL(),
                 rawId: r.credentialID.toBase64URL(),
@@ -42,9 +53,10 @@ class AuthenticateController: NSObject, ASAuthorizationControllerDelegate, ASAut
                     clientDataJSON: r.rawClientDataJSON.toBase64URL(),
                     authenticatorData: r.rawAuthenticatorData.toBase64URL(),
                     signature: r.signature.toBase64URL(),
-                    userHandle: r.userID.toBase64URL()
+                    userHandle: r.userID?.toBase64URL()
                 ),
                 type: "public-key",
+                clientExtensionResults: AuthPasskeyExtensionResult(appid: nil, prf: prfOutput),
                 username: "username"
             )
             completion?(.success(response))

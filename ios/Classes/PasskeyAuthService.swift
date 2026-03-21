@@ -54,6 +54,20 @@ class PasskeyAuthServiceImpl: PasskeyAuthService {
                 
         credentialRequest.allowedCredentials = parseCredentials(credentialIDs: request.allowCredentials.map { e in e.id })
                 
+        if #available(iOS 18.0, *) {
+            if let prfEval = request.extensions?.prf?.eval {
+                if let firstSaltStr = prfEval["first"] as? String, let salt1 = Data.fromBase64Url(firstSaltStr) {
+                    var salt2: Data? = nil
+                    if let secondSaltStr = prfEval["second"] as? String {
+                        salt2 = Data.fromBase64Url(secondSaltStr)
+                    }
+                    let inputValues = ASAuthorizationPublicKeyCredentialPRFAssertionInput.InputValues(saltInput1: salt1, saltInput2: salt2)
+                    let prfInput = ASAuthorizationPublicKeyCredentialPRFAssertionInput.inputValues(inputValues)
+                    credentialRequest.prf = prfInput
+                }
+            }
+        }
+                
         authenController = AuthenticateController(window: self.window, completion: completion)
         authenController?.run(request: credentialRequest, preferImmediatelyAvailableCredentials: false)
         
@@ -90,6 +104,13 @@ class PasskeyAuthServiceImpl: PasskeyAuthService {
 
         if #available(iOS 17.4, *) {
             request.excludedCredentials = parseCredentials(credentialIDs: option.excludeCredentials.map{ e in e.id })
+        }
+        
+        if #available(iOS 18.0, *) {
+            if option.extensions.prf != nil {
+                let prfInput = ASAuthorizationPublicKeyCredentialPRFRegistrationInput.checkForSupport
+                request.prf = prfInput
+            }
         }
 
         registerController = RegisterController(window: self.window, completion: completion)

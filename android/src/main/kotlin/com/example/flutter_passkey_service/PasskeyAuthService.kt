@@ -215,12 +215,20 @@ class PasskeyAuthServiceImpl(private val credentialManager: CredentialManager) :
 
     private fun buildGetPasskeyAuthenticationResponseData(jsonElement: JsonObject): GetPasskeyAuthenticationResponseData {
         return GetPasskeyAuthenticationResponseData(
-            authenticatorAttachment = jsonElement["authenticatorAttachment"]!!.jsonPrimitive.content,
+            authenticatorAttachment = jsonElement["authenticatorAttachment"]?.jsonPrimitive?.content,
             id = jsonElement["id"]!!.jsonPrimitive.content,
             rawId = jsonElement["rawId"]!!.jsonPrimitive.content,
             response = parseGetPasskeyResponse(jsonElement["response"]!!.jsonObject),
             type = jsonElement["type"]!!.jsonPrimitive.content,
+            clientExtensionResults = jsonElement["clientExtensionResults"]?.jsonObject?.let { parseAuthPasskeyExtensionResult(it) },
             username = jsonElement["username"]?.jsonPrimitive?.content ?: "username"
+        )
+    }
+
+    private fun parseAuthPasskeyExtensionResult(json: JsonObject): AuthPasskeyExtensionResult {
+        return AuthPasskeyExtensionResult(
+            appid = json["appid"]?.jsonPrimitive?.boolean,
+            prf = json["prf"]?.jsonObject?.let { parseCreatePasskeyExtensionPrf(it) }
         )
     }
 
@@ -241,13 +249,27 @@ class PasskeyAuthServiceImpl(private val credentialManager: CredentialManager) :
             }
             put("timeout", request.timeout)
             put("userVerification", request.userVerification)
+            if (request.extensions?.prf != null) {
+                putJsonObject("extensions") {
+                    putJsonObject("prf") {
+                        val prfEval = request.extensions?.prf?.eval
+                        if (prfEval != null) {
+                            putJsonObject("eval") {
+                                prfEval.forEach { (key, value) ->
+                                    if (key != null && value != null) put(key, value)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }.toString()
     }
 
     private fun buildCreatePasskeyResponseData(jsonElement: JsonObject): CreatePasskeyResponseData {
         return CreatePasskeyResponseData(
             rawId = jsonElement["rawId"]!!.jsonPrimitive.content,
-            authenticatorAttachment = jsonElement["authenticatorAttachment"]!!.jsonPrimitive.content,
+            authenticatorAttachment = jsonElement["authenticatorAttachment"]?.jsonPrimitive?.content,
             type = jsonElement["type"]!!.jsonPrimitive.content,
             id = jsonElement["id"]!!.jsonPrimitive.content,
             response = parseCreatePasskeyResponse(jsonElement["response"]!!.jsonObject),
@@ -297,6 +319,18 @@ class PasskeyAuthServiceImpl(private val credentialManager: CredentialManager) :
             }
             putJsonObject("extensions") {
                 put("credProps", option.extensions.credProps)
+                if (option.extensions.prf != null) {
+                    putJsonObject("prf") {
+                        val prfEval = option.extensions.prf?.eval
+                        if (prfEval != null) {
+                            putJsonObject("eval") {
+                                prfEval.forEach { (key, value) ->
+                                    if (key != null && value != null) put(key, value)
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }.toString()
     }
@@ -324,9 +358,14 @@ class PasskeyAuthServiceImpl(private val credentialManager: CredentialManager) :
         )
     }
     
-    private fun parseCreatePasskeyExtensionPrf(json: JsonObject): CreatePasskeyExtensionPrf {
-        return CreatePasskeyExtensionPrf(
-            rk = json["rk"]!!.jsonPrimitive.boolean
+    private fun parseCreatePasskeyExtensionPrf(json: JsonObject): PrfExtensionOutput {
+        val resultsMap = mutableMapOf<String?, String?>()
+        json["results"]?.jsonObject?.forEach { (key, value) ->
+            resultsMap[key] = value.jsonPrimitive.content
+        }
+        return PrfExtensionOutput(
+            enabled = json["enabled"]?.jsonPrimitive?.boolean,
+            results = if (resultsMap.isNotEmpty()) resultsMap else null
         )
     }
     

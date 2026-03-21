@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.4] - 2026-03-21
+
+### Added
+- Included `hints`, `attestationFormats`, and `extensions` to WebAuthn creation underlying parameters for robust JSON mapping.
+- Implemented `clientExtensionResults` support within authentication response payloads.
+- **WebAuthn PRF (Key Encryption Key)** extension support across iOS 18+ and Android Credential Manager, allowing extraction of symmetric keys from deterministic PRF salts directly during authentication.
+- Added `enablePrf` parameter directly to `createRegistrationOptions` for enabling PRF evaluation during passkey registrations.
+- Added PRF KEK Extraction Example directly inside the `example` application's UI demonstrating symmetric key derivation.
+
+### Changed
+- Standardized and completely overhauled `README.md` to remove duplicated guides, ensuring much clearer setup instructions for both iOS and Android.
+- Expanded the Dart unit test suite extensively to verify missing field defaults and string JSON edge cases natively.
+
+### Fixed
+- Migrated explicitly nullable fields (`userHandle`, `authenticatorAttachment`, `publicKey`, etc.) in `messages.dart` to fully align natively with the permissive WebAuthn standard and prevent FIDO hardware decoder issues.
+
 ## [0.0.3] - 2025-09-09
 
 ### Added
@@ -59,5 +75,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Lazy initialization to prevent startup crashes
 - Clean separation of concerns with utility classes
 
+[0.0.4]: https://github.com/minhtri1401/flutter_passkey_service/releases/tag/v0.0.4
 [0.0.3]: https://github.com/minhtri1401/flutter_passkey_service/releases/tag/v0.0.3
 [0.0.2]: https://github.com/minhtri1401/flutter_passkey_service/releases/tag/v0.0.2
