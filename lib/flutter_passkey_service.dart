@@ -58,6 +58,7 @@ class FlutterPasskeyService {
     required String username,
     String displayName = '',
     bool enablePrf = false,
+    bool enableLargeBlob = false,
     int timeout = 60000,
     String attestation = 'none',
     List<RegisterGenerateOptionExcludeCredential> excludeCredentials = const [],
@@ -93,6 +94,9 @@ class FlutterPasskeyService {
       extensions: RegisterGenerateOptionExtension(
         credProps: true,
         prf: enablePrf ? PrfExtensionInput(eval: null) : null,
+        largeBlob: enableLargeBlob
+            ? LargeBlobExtensionRegistrationInput(support: 'preferred')
+            : null,
       ),
     );
   }
@@ -105,6 +109,9 @@ class FlutterPasskeyService {
     List<String>? allowedCredentialIds,
     int timeout = 60000,
     String userVerification = 'required',
+    Map<String, String?>? prfEval,
+    bool? largeBlobRead,
+    Uint8List? largeBlobWrite,
   }) {
     // Convert allowedCredentialIds to allowCredentials if provided
     final credentials =
@@ -119,12 +126,34 @@ class FlutterPasskeyService {
             .toList() ??
         allowCredentials;
 
+    // Build PRF extension if requested
+    PrfExtensionInput? prfInput;
+    if (prfEval != null) {
+      prfInput = PrfExtensionInput(eval: prfEval);
+    }
+
+    // Build largeBlob extension if requested
+    LargeBlobExtensionAuthInput? largeBlobInput;
+    if (largeBlobRead == true) {
+      largeBlobInput = LargeBlobExtensionAuthInput(read: true);
+    } else if (largeBlobWrite != null) {
+      largeBlobInput = LargeBlobExtensionAuthInput(write: largeBlobWrite);
+    }
+
+    final hasExtensions = prfInput != null || largeBlobInput != null;
+
     return AuthGenerateOptionResponseData(
       rpId: rpId,
       challenge: challenge,
       allowCredentials: credentials,
       timeout: timeout,
       userVerification: userVerification,
+      extensions: hasExtensions
+          ? AuthGenerateOptionExtension(
+              prf: prfInput,
+              largeBlob: largeBlobInput,
+            )
+          : null,
     );
   }
 
@@ -199,6 +228,7 @@ class FlutterPasskeyService {
       extensions: RegisterGenerateOptionExtension(
         credProps: json['extensions']?['credProps'] as bool? ?? true,
         prf: _parsePrfExtensionInput(json['extensions']?['prf']),
+        largeBlob: _parseLargeBlobRegistrationInput(json['extensions']?['largeBlob']),
       ),
       hints: (json['hints'] as List<dynamic>?)?.cast<String>(),
       attestationFormats:
@@ -251,6 +281,7 @@ class FlutterPasskeyService {
               ? AuthGenerateOptionExtension(
                 appid: json['extensions']['appid'] as bool?,
                 prf: _parsePrfExtensionInput(json['extensions']['prf']),
+                largeBlob: _parseLargeBlobAuthInput(json['extensions']['largeBlob']),
               )
               : null,
     );
@@ -310,6 +341,34 @@ class FlutterPasskeyService {
     }
     return null;
   }
+
+  /// Helper method to parse largeBlob registration input from JSON
+  static LargeBlobExtensionRegistrationInput? _parseLargeBlobRegistrationInput(dynamic json) {
+    if (json == null) return null;
+    if (json is Map) {
+      return LargeBlobExtensionRegistrationInput(
+        support: json['support'] as String? ?? 'preferred',
+      );
+    }
+    return null;
+  }
+
+  /// Helper method to parse largeBlob auth input from JSON
+  static LargeBlobExtensionAuthInput? _parseLargeBlobAuthInput(dynamic json) {
+    if (json == null) return null;
+    if (json is Map) {
+      if (json['read'] == true && json['write'] != null) {
+        throw ArgumentError('largeBlob read and write are mutually exclusive');
+      }
+      return LargeBlobExtensionAuthInput(
+        read: json['read'] as bool?,
+        write: json['write'] is String
+            ? base64Url.decode(base64Url.normalize(json['write'] as String))
+            : json['write'] as Uint8List?,
+      );
+    }
+    return null;
+  }
 }
 
 /// Extension methods for convenient JSON serialization
@@ -353,6 +412,11 @@ extension RegisterGenerateOptionDataExtension on RegisterGenerateOptionData {
           'prf': {'eval': extensions.prf!.eval},
         if (extensions.prf != null && extensions.prf!.eval == null)
           'prf': {}, // Enable PRF on creation
+        if (extensions.largeBlob != null)
+          'largeBlob': {
+            if (extensions.largeBlob!.support != null)
+              'support': extensions.largeBlob!.support,
+          },
       },
       if (hints != null) 'hints': hints,
       if (attestationFormats != null) 'attestationFormats': attestationFormats,
@@ -391,6 +455,12 @@ extension AuthGenerateOptionResponseDataExtension
           'prf': {'eval': extensions!.prf!.eval},
         if (extensions!.prf != null && extensions!.prf!.eval == null)
           'prf': {},
+        if (extensions!.largeBlob != null) 'largeBlob': {
+          if (extensions!.largeBlob!.read != null)
+            'read': extensions!.largeBlob!.read,
+          if (extensions!.largeBlob!.write != null)
+            'write': base64Url.encode(extensions!.largeBlob!.write!),
+        },
       },
     };
   }

@@ -116,13 +116,16 @@ class AuthGenerateOptionResponseData {
 
 /// Represents extensions for authentication options
 class AuthGenerateOptionExtension {
-  AuthGenerateOptionExtension({this.appid, this.prf});
+  AuthGenerateOptionExtension({this.appid, this.prf, this.largeBlob});
 
   /// AppID extension
   bool? appid;
 
   /// PRF extension input parameters
   PrfExtensionInput? prf;
+
+  /// LargeBlob extension input for authentication
+  LargeBlobExtensionAuthInput? largeBlob;
 }
 
 /// Represents an allowed credential for authentication
@@ -248,13 +251,16 @@ class CreatePasskeyResponse {
 
 /// Represents client extension results for passkey creation
 class CreatePasskeyExtension {
-  CreatePasskeyExtension({this.credProps, this.prf});
+  CreatePasskeyExtension({this.credProps, this.prf, this.largeBlob});
 
   /// Credential properties extension (optional)
   CreatePasskeyExtensionProps? credProps;
 
   /// PRF extension (optional)
   PrfExtensionOutput? prf;
+
+  /// LargeBlob extension output for registration
+  LargeBlobExtensionRegistrationOutput? largeBlob;
 }
 
 /// Represents credential properties extension
@@ -301,13 +307,16 @@ class GetPasskeyAuthenticationResponseData {
 
 /// Represents client extension results for passkey authentication
 class AuthPasskeyExtensionResult {
-  AuthPasskeyExtensionResult({this.appid, this.prf});
+  AuthPasskeyExtensionResult({this.appid, this.prf, this.largeBlob});
 
   /// AppID extension result
   bool? appid;
 
   /// PRF extension output results
   PrfExtensionOutput? prf;
+
+  /// LargeBlob extension output for authentication
+  LargeBlobExtensionAuthOutput? largeBlob;
 }
 
 /// Represents the authentication response from passkey
@@ -467,13 +476,16 @@ class RegisterGenerateOptionAuthenticatorSelection {
 
 /// Represents extensions for registration
 class RegisterGenerateOptionExtension {
-  RegisterGenerateOptionExtension({required this.credProps, this.prf});
+  RegisterGenerateOptionExtension({required this.credProps, this.prf, this.largeBlob});
 
   /// Credential properties extension
   bool credProps;
 
   /// PRF extension input parameters
   PrfExtensionInput? prf;
+
+  /// LargeBlob extension input for registration
+  LargeBlobExtensionRegistrationInput? largeBlob;
 }
 
 /// Represents the response data for registration verification
@@ -532,4 +544,46 @@ class PrfExtensionOutput {
 
   /// The dictionary structure containing derived salts ('first' and optionally 'second')
   Map<String?, String?>? results;
+}
+
+/// LargeBlob extension input for registration
+/// Indicates whether the authenticator should support largeBlob storage
+class LargeBlobExtensionRegistrationInput {
+  LargeBlobExtensionRegistrationInput({this.support});
+
+  /// Support preference: "preferred" or "required"
+  String? support;
+}
+
+/// LargeBlob extension output for registration
+/// Indicates whether the authenticator supports largeBlob storage
+class LargeBlobExtensionRegistrationOutput {
+  LargeBlobExtensionRegistrationOutput({this.supported});
+
+  /// Whether the authenticator supports largeBlob
+  bool? supported;
+}
+
+/// LargeBlob extension input for authentication
+/// Supports reading or writing blob data (mutually exclusive per WebAuthn spec)
+class LargeBlobExtensionAuthInput {
+  LargeBlobExtensionAuthInput({this.read, this.write});
+
+  /// Set to true to read the stored blob
+  bool? read;
+
+  /// Data to write to the blob
+  Uint8List? write;
+}
+
+/// LargeBlob extension output for authentication
+/// Contains the read blob data or write success status
+class LargeBlobExtensionAuthOutput {
+  LargeBlobExtensionAuthOutput({this.blob, this.written});
+
+  /// The retrieved blob data (when read was requested)
+  Uint8List? blob;
+
+  /// Whether the write operation succeeded (when write was requested)
+  bool? written;
 }

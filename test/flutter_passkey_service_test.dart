@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_passkey_service/flutter_passkey_service_platform_interface.dart';
 import 'package:flutter_passkey_service/flutter_passkey_service_method_channel.dart';
@@ -66,6 +67,59 @@ void main() {
       expect(options.allowCredentials, isEmpty);
       expect(options.hints, isNull);
       expect(options.extensions, isNull);
+    });
+
+    test('createRegistrationOptions with enableLargeBlob creates largeBlob extension', () {
+      final options = FlutterPasskeyService.createRegistrationOptions(
+        challenge: 'test-challenge',
+        rpName: 'Test RP',
+        rpId: 'test.com',
+        userId: 'user-123',
+        username: 'testuser',
+        enableLargeBlob: true,
+      );
+
+      expect(options.extensions.largeBlob, isNotNull);
+      expect(options.extensions.largeBlob!.support, 'preferred');
+    });
+
+    test('createRegistrationOptions without enableLargeBlob has null largeBlob', () {
+      final options = FlutterPasskeyService.createRegistrationOptions(
+        challenge: 'test-challenge',
+        rpName: 'Test RP',
+        rpId: 'test.com',
+        userId: 'user-123',
+        username: 'testuser',
+      );
+
+      expect(options.extensions.largeBlob, isNull);
+    });
+
+    test('createAuthenticationOptions with largeBlobRead creates read extension', () {
+      final options = FlutterPasskeyService.createAuthenticationOptions(
+        challenge: 'auth-challenge',
+        rpId: 'test.com',
+        largeBlobRead: true,
+      );
+
+      expect(options.extensions, isNotNull);
+      expect(options.extensions!.largeBlob, isNotNull);
+      expect(options.extensions!.largeBlob!.read, true);
+      expect(options.extensions!.largeBlob!.write, isNull);
+    });
+
+    test('createAuthenticationOptions with largeBlobWrite creates write extension', () {
+      final writeData = Uint8List.fromList([1, 2, 3, 4, 5]);
+      final options = FlutterPasskeyService.createAuthenticationOptions(
+        challenge: 'auth-challenge',
+        rpId: 'test.com',
+        largeBlobWrite: writeData,
+      );
+
+      expect(options.extensions, isNotNull);
+      expect(options.extensions!.largeBlob, isNotNull);
+      expect(options.extensions!.largeBlob!.read, isNull);
+      expect(options.extensions!.largeBlob!.write, writeData);
     });
 
     test('createAuthenticationOptions formats allowedCredentialIds properly', () {
@@ -236,6 +290,136 @@ void main() {
 
       final toJsonResult = options.toJson();
       expect(toJsonResult['extensions']['prf']['eval']['first'], "c2FsdDEyMzQ1Njc4OTA=");
+    });
+
+    test('createRegistrationOptionsFromJson parses largeBlob extension', () {
+      final json = {
+        "challenge": "reg-challenge",
+        "rp": {"name": "My App", "id": "example.com"},
+        "user": {"id": "user-123", "name": "user@example.com"},
+        "extensions": {
+          "largeBlob": {"support": "required"}
+        }
+      };
+
+      final options = FlutterPasskeyService.createRegistrationOptionsFromJson(json);
+
+      expect(options.extensions.largeBlob, isNotNull);
+      expect(options.extensions.largeBlob!.support, 'required');
+
+      final toJsonResult = options.toJson();
+      expect(toJsonResult['extensions']['largeBlob']['support'], 'required');
+    });
+
+    test('createRegistrationOptionsFromJson handles largeBlob with default support', () {
+      final json = {
+        "challenge": "reg-challenge",
+        "rp": {"name": "My App", "id": "example.com"},
+        "user": {"id": "user-123", "name": "user@example.com"},
+        "extensions": {
+          "largeBlob": {}
+        }
+      };
+
+      final options = FlutterPasskeyService.createRegistrationOptionsFromJson(json);
+
+      expect(options.extensions.largeBlob, isNotNull);
+      expect(options.extensions.largeBlob!.support, 'preferred');
+    });
+
+    test('createAuthenticationOptionsFromJson parses largeBlob read', () {
+      final json = {
+        "challenge": "auth-challenge",
+        "rpId": "example.com",
+        "extensions": {
+          "largeBlob": {"read": true}
+        }
+      };
+
+      final options = FlutterPasskeyService.createAuthenticationOptionsFromJson(json);
+
+      expect(options.extensions?.largeBlob, isNotNull);
+      expect(options.extensions!.largeBlob!.read, true);
+      expect(options.extensions!.largeBlob!.write, isNull);
+
+      final toJsonResult = options.toJson();
+      expect(toJsonResult['extensions']['largeBlob']['read'], true);
+    });
+
+    test('createAuthenticationOptionsFromJson parses largeBlob write with base64 data', () {
+      final json = {
+        "challenge": "auth-challenge",
+        "rpId": "example.com",
+        "extensions": {
+          "largeBlob": {"write": "AQIDBAU="}  // base64url of [1,2,3,4,5]
+        }
+      };
+
+      final options = FlutterPasskeyService.createAuthenticationOptionsFromJson(json);
+
+      expect(options.extensions?.largeBlob, isNotNull);
+      expect(options.extensions!.largeBlob!.write, isNotNull);
+      expect(options.extensions!.largeBlob!.write, Uint8List.fromList([1, 2, 3, 4, 5]));
+    });
+
+    test('createAuthenticationOptionsFromJson without largeBlob has null largeBlob', () {
+      final json = {
+        "challenge": "auth-challenge",
+        "rpId": "example.com",
+        "extensions": {
+          "appid": true
+        }
+      };
+
+      final options = FlutterPasskeyService.createAuthenticationOptionsFromJson(json);
+
+      expect(options.extensions?.largeBlob, isNull);
+      expect(options.extensions?.appid, true);
+    });
+
+    test('largeBlob toJson serialization round-trips correctly', () {
+      final options = FlutterPasskeyService.createRegistrationOptions(
+        challenge: 'test',
+        rpName: 'App',
+        rpId: 'app.com',
+        userId: 'u1',
+        username: 'user',
+        enableLargeBlob: true,
+        enablePrf: true,
+      );
+
+      final json = options.toJson();
+      expect(json['extensions']['largeBlob']['support'], 'preferred');
+      expect(json['extensions']['prf'], {});
+      expect(json['extensions']['credProps'], true);
+    });
+
+    test('createAuthenticationOptions with prfEval creates PRF extension', () {
+      final options = FlutterPasskeyService.createAuthenticationOptions(
+        challenge: 'auth-challenge',
+        rpId: 'test.com',
+        prfEval: {'first': 'c2FsdDE=', 'second': 'c2FsdDI='},
+      );
+
+      expect(options.extensions, isNotNull);
+      expect(options.extensions!.prf, isNotNull);
+      expect(options.extensions!.prf!.eval!['first'], 'c2FsdDE=');
+      expect(options.extensions!.prf!.eval!['second'], 'c2FsdDI=');
+    });
+
+    test('createAuthenticationOptions with both prfEval and largeBlobRead', () {
+      final options = FlutterPasskeyService.createAuthenticationOptions(
+        challenge: 'auth-challenge',
+        rpId: 'test.com',
+        prfEval: {'first': 'c2FsdDE='},
+        largeBlobRead: true,
+      );
+
+      expect(options.extensions, isNotNull);
+      expect(options.extensions!.prf, isNotNull);
+      expect(options.extensions!.prf!.eval!['first'], 'c2FsdDE=');
+      expect(options.extensions!.largeBlob, isNotNull);
+      expect(options.extensions!.largeBlob!.read, true);
     });
 
     test('createRegistrationOptionsFromJson handles PRF enabling creation', () {

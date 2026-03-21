@@ -32,6 +32,7 @@ A robust, production-ready Flutter plugin for integrating **Passkeys** (WebAuthn
 - **Cross-Platform**: Unifies iOS AuthenticationServices and Android Credential Manager APIs.
 - **Cross-Device Sync**: Auto-sync across devices via iCloud Keychain and Google Password Manager.
 - **WebAuthn Compliant**: Full compliance with W3C WebAuthn standards.
+- **Advanced Extensions**: Native support for **PRF** (derive symmetric Key Encryption Keys) and **Large Blob** (store data directly on the passkey).
 - **Type-Safe API**: Reliable Flutter-to-native communication generated with Pigeon.
 - **JSON Serialization**: Easy conversion to and from server JSON responses.
 
@@ -195,6 +196,54 @@ try {
       print('Unhandled passkey error: ${e.message}');
   }
 }
+```
+
+### 5. WebAuthn Extensions (PRF & Large Blob)
+
+**PRF (Key Encryption Key)**
+The PRF extension allows you to derive a symmetric key (KEK) during authentication, tied strictly to the passkey. This is perfect for encrypting local offline game saves or profiles.
+
+```dart
+// 1. Enable PRF during Registration
+final regOptions = FlutterPasskeyService.createRegistrationOptions(
+  /* ... */
+  enablePrf: true, 
+);
+
+// 2. Derive Key during Authentication
+final authOptions = FlutterPasskeyService.createAuthenticationOptionsFromJson(serverAuthJson);
+// Send your salt to derive the KEK
+authOptions.extensions = AuthGenerateOptionExtension(
+  prf: PrfExtensionInput(eval: {'first': 'base64url-encoded-salt-here'})
+);
+final response = await FlutterPasskeyService.authenticate(authOptions);
+final derivedKey = response.clientExtensionResults?.prf?.results?['first'];
+```
+
+**Large Blob Storage**
+The Large Blob extension lets you store up to 1KB of arbitrary data directly within the passkey hardware.
+
+```dart
+// 1. Enable Large Blob Support during Registration
+final regOptions = FlutterPasskeyService.createRegistrationOptions(
+  /* ... */
+  enableLargeBlob: true,
+);
+
+// 2. Write Data during Authentication
+final authOptionsWrite = FlutterPasskeyService.createAuthenticationOptions(
+  /* ... */
+  largeBlobWrite: Uint8List.fromList('Hello World'.codeUnits),
+);
+await FlutterPasskeyService.authenticate(authOptionsWrite);
+
+// 3. Read Data during Authentication
+final authOptionsRead = FlutterPasskeyService.createAuthenticationOptions(
+  /* ... */
+  largeBlobRead: true,
+);
+final response = await FlutterPasskeyService.authenticate(authOptionsRead);
+final blobData = response.clientExtensionResults?.largeBlob?.blob;
 ```
 
 ## 📚 Tutorials & Articles

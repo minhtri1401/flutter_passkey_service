@@ -29,7 +29,17 @@ class RegisterController: NSObject, ASAuthorizationControllerDelegate, ASAuthori
                     prfOutput = PrfExtensionOutput(enabled: prfResult.isSupported, results: nil)
                 }
             }
-            
+
+            var largeBlobOutput: LargeBlobExtensionRegistrationOutput? = nil
+            if #available(iOS 17.0, *) {
+                if let platformReg = r as? ASAuthorizationPlatformPublicKeyCredentialRegistration,
+                   let largeBlobResult = platformReg.largeBlob {
+                    largeBlobOutput = LargeBlobExtensionRegistrationOutput(
+                        supported: largeBlobResult.isSupported
+                    )
+                }
+            }
+
             let response = CreatePasskeyResponseData(
                 rawId: r.credentialID.toBase64URL(),
                 authenticatorAttachment: "platform",
@@ -45,7 +55,8 @@ class RegisterController: NSObject, ASAuthorizationControllerDelegate, ASAuthori
                 ),
                 clientExtensionResults: CreatePasskeyExtension(
                     credProps: nil,
-                    prf: prfOutput
+                    prf: prfOutput,
+                    largeBlob: largeBlobOutput
                 ),
                 username: "username"
             )

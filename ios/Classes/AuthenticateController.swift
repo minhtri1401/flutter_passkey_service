@@ -1,6 +1,7 @@
 import AuthenticationServices
 import LocalAuthentication
 import Foundation
+import Flutter
 
 @available(iOS 16.0, *)
 class AuthenticateController: NSObject, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
@@ -45,7 +46,29 @@ class AuthenticateController: NSObject, ASAuthorizationControllerDelegate, ASAut
                     }
                 }
             }
-            
+
+            var largeBlobOutput: LargeBlobExtensionAuthOutput? = nil
+            if #available(iOS 17.0, *) {
+                if let platformAssertion = r as? ASAuthorizationPlatformPublicKeyCredentialAssertion,
+                   let largeBlobResult = platformAssertion.largeBlob {
+                    switch largeBlobResult.result {
+                    case .read(data: let data):
+                        let blobData: FlutterStandardTypedData? = data.map { FlutterStandardTypedData(bytes: $0) }
+                        largeBlobOutput = LargeBlobExtensionAuthOutput(
+                            blob: blobData,
+                            written: nil
+                        )
+                    case .write(success: let success):
+                        largeBlobOutput = LargeBlobExtensionAuthOutput(
+                            blob: nil,
+                            written: success
+                        )
+                    @unknown default:
+                        break
+                    }
+                }
+            }
+
             let response = GetPasskeyAuthenticationResponseData(
                 authenticatorAttachment: "platform", id: r.credentialID.toBase64URL(),
                 rawId: r.credentialID.toBase64URL(),
@@ -56,7 +79,7 @@ class AuthenticateController: NSObject, ASAuthorizationControllerDelegate, ASAut
                     userHandle: r.userID?.toBase64URL()
                 ),
                 type: "public-key",
-                clientExtensionResults: AuthPasskeyExtensionResult(appid: nil, prf: prfOutput),
+                clientExtensionResults: AuthPasskeyExtensionResult(appid: nil, prf: prfOutput, largeBlob: largeBlobOutput),
                 username: "username"
             )
             completion?(.success(response))

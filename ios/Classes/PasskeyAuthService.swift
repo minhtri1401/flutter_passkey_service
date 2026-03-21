@@ -1,5 +1,6 @@
 
 import AuthenticationServices
+import Flutter
 
 /**
  A protocol that defines passkey-based authentication and registration services.
@@ -67,7 +68,17 @@ class PasskeyAuthServiceImpl: PasskeyAuthService {
                 }
             }
         }
-                
+
+        if #available(iOS 17.0, *) {
+            if let largeBlobInput = request.extensions?.largeBlob {
+                if largeBlobInput.read == true {
+                    credentialRequest.largeBlob = ASAuthorizationPublicKeyCredentialLargeBlobAssertionInput.read
+                } else if let writeData = largeBlobInput.write {
+                    credentialRequest.largeBlob = ASAuthorizationPublicKeyCredentialLargeBlobAssertionInput.write(writeData.data)
+                }
+            }
+        }
+
         authenController = AuthenticateController(window: self.window, completion: completion)
         authenController?.run(request: credentialRequest, preferImmediatelyAvailableCredentials: false)
         
@@ -110,6 +121,16 @@ class PasskeyAuthServiceImpl: PasskeyAuthService {
             if option.extensions.prf != nil {
                 let prfInput = ASAuthorizationPublicKeyCredentialPRFRegistrationInput.checkForSupport
                 request.prf = prfInput
+            }
+        }
+
+        if #available(iOS 17.0, *) {
+            if let largeBlobInput = option.extensions.largeBlob {
+                if largeBlobInput.support == "required" {
+                    request.largeBlob = ASAuthorizationPublicKeyCredentialLargeBlobRegistrationInput.supportRequired
+                } else {
+                    request.largeBlob = ASAuthorizationPublicKeyCredentialLargeBlobRegistrationInput.supportPreferred
+                }
             }
         }
 

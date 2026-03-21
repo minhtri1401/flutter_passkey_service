@@ -8,6 +8,7 @@ import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetPasswordOption
 import androidx.credentials.GetPublicKeyCredentialOption
 import androidx.credentials.PublicKeyCredential
+import android.util.Base64
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.json.*
@@ -228,7 +229,8 @@ class PasskeyAuthServiceImpl(private val credentialManager: CredentialManager) :
     private fun parseAuthPasskeyExtensionResult(json: JsonObject): AuthPasskeyExtensionResult {
         return AuthPasskeyExtensionResult(
             appid = json["appid"]?.jsonPrimitive?.boolean,
-            prf = json["prf"]?.jsonObject?.let { parseCreatePasskeyExtensionPrf(it) }
+            prf = json["prf"]?.jsonObject?.let { parseCreatePasskeyExtensionPrf(it) },
+            largeBlob = json["largeBlob"]?.jsonObject?.let { parseLargeBlobAuthOutput(it) }
         )
     }
 
@@ -249,15 +251,33 @@ class PasskeyAuthServiceImpl(private val credentialManager: CredentialManager) :
             }
             put("timeout", request.timeout)
             put("userVerification", request.userVerification)
-            if (request.extensions?.prf != null) {
+            val hasPrf = request.extensions?.prf != null
+            val hasLargeBlob = request.extensions?.largeBlob != null
+            if (hasPrf || hasLargeBlob) {
                 putJsonObject("extensions") {
-                    putJsonObject("prf") {
-                        val prfEval = request.extensions?.prf?.eval
-                        if (prfEval != null) {
-                            putJsonObject("eval") {
-                                prfEval.forEach { (key, value) ->
-                                    if (key != null && value != null) put(key, value)
+                    if (hasPrf) {
+                        putJsonObject("prf") {
+                            val prfEval = request.extensions?.prf?.eval
+                            if (prfEval != null) {
+                                putJsonObject("eval") {
+                                    prfEval.forEach { (key, value) ->
+                                        if (key != null && value != null) put(key, value)
+                                    }
                                 }
+                            }
+                        }
+                    }
+                    if (hasLargeBlob) {
+                        putJsonObject("largeBlob") {
+                            val lb = request.extensions!!.largeBlob!!
+                            if (lb.read == true) {
+                                put("read", true)
+                            } else if (lb.write != null) {
+                                val encoded = Base64.encodeToString(
+                                    lb.write,
+                                    Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING
+                                )
+                                put("write", encoded)
                             }
                         }
                     }
@@ -331,6 +351,11 @@ class PasskeyAuthServiceImpl(private val credentialManager: CredentialManager) :
                         }
                     }
                 }
+                if (option.extensions.largeBlob != null) {
+                    putJsonObject("largeBlob") {
+                        put("support", option.extensions.largeBlob?.support ?: "preferred")
+                    }
+                }
             }
         }.toString()
     }
@@ -348,7 +373,8 @@ class PasskeyAuthServiceImpl(private val credentialManager: CredentialManager) :
     private fun parseCreatePasskeyExtension(json: JsonObject): CreatePasskeyExtension {
         return CreatePasskeyExtension(
             credProps = json["credProps"]?.jsonObject?.let { parseCreatePasskeyExtensionProps(it) },
-            prf = json["prf"]?.jsonObject?.let { parseCreatePasskeyExtensionPrf(it) }
+            prf = json["prf"]?.jsonObject?.let { parseCreatePasskeyExtensionPrf(it) },
+            largeBlob = json["largeBlob"]?.jsonObject?.let { parseLargeBlobRegistrationOutput(it) }
         )
     }
     
@@ -369,6 +395,26 @@ class PasskeyAuthServiceImpl(private val credentialManager: CredentialManager) :
         )
     }
     
+    private fun parseLargeBlobRegistrationOutput(json: JsonObject): LargeBlobExtensionRegistrationOutput {
+        return LargeBlobExtensionRegistrationOutput(
+            supported = json["supported"]?.jsonPrimitive?.boolean
+        )
+    }
+
+    private fun parseLargeBlobAuthOutput(json: JsonObject): LargeBlobExtensionAuthOutput {
+        val blobData = try {
+            json["blob"]?.jsonPrimitive?.content?.let { base64Str ->
+                Base64.decode(base64Str, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
+            }
+        } catch (e: IllegalArgumentException) {
+            null
+        }
+        return LargeBlobExtensionAuthOutput(
+            blob = blobData,
+            written = json["written"]?.jsonPrimitive?.boolean
+        )
+    }
+
     private fun parseGetPasskeyResponse(json: JsonObject): GetPasskeyAuthenticationResponse {
         return GetPasskeyAuthenticationResponse(
             clientDataJSON = json["clientDataJSON"]!!.jsonPrimitive.content,

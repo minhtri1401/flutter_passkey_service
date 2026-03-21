@@ -225,20 +225,24 @@ data class AuthGenerateOptionExtension (
   /** AppID extension */
   val appid: Boolean? = null,
   /** PRF extension input parameters */
-  val prf: PrfExtensionInput? = null
+  val prf: PrfExtensionInput? = null,
+  /** LargeBlob extension input for authentication */
+  val largeBlob: LargeBlobExtensionAuthInput? = null
 )
  {
   companion object {
     fun fromList(pigeonVar_list: List<Any?>): AuthGenerateOptionExtension {
       val appid = pigeonVar_list[0] as Boolean?
       val prf = pigeonVar_list[1] as PrfExtensionInput?
-      return AuthGenerateOptionExtension(appid, prf)
+      val largeBlob = pigeonVar_list[2] as LargeBlobExtensionAuthInput?
+      return AuthGenerateOptionExtension(appid, prf, largeBlob)
     }
   }
   fun toList(): List<Any?> {
     return listOf(
       appid,
       prf,
+      largeBlob,
     )
   }
   override fun equals(other: Any?): Boolean {
@@ -503,20 +507,24 @@ data class CreatePasskeyExtension (
   /** Credential properties extension (optional) */
   val credProps: CreatePasskeyExtensionProps? = null,
   /** PRF extension (optional) */
-  val prf: PrfExtensionOutput? = null
+  val prf: PrfExtensionOutput? = null,
+  /** LargeBlob extension output for registration */
+  val largeBlob: LargeBlobExtensionRegistrationOutput? = null
 )
  {
   companion object {
     fun fromList(pigeonVar_list: List<Any?>): CreatePasskeyExtension {
       val credProps = pigeonVar_list[0] as CreatePasskeyExtensionProps?
       val prf = pigeonVar_list[1] as PrfExtensionOutput?
-      return CreatePasskeyExtension(credProps, prf)
+      val largeBlob = pigeonVar_list[2] as LargeBlobExtensionRegistrationOutput?
+      return CreatePasskeyExtension(credProps, prf, largeBlob)
     }
   }
   fun toList(): List<Any?> {
     return listOf(
       credProps,
       prf,
+      largeBlob,
     )
   }
   override fun equals(other: Any?): Boolean {
@@ -630,20 +638,24 @@ data class AuthPasskeyExtensionResult (
   /** AppID extension result */
   val appid: Boolean? = null,
   /** PRF extension output results */
-  val prf: PrfExtensionOutput? = null
+  val prf: PrfExtensionOutput? = null,
+  /** LargeBlob extension output for authentication */
+  val largeBlob: LargeBlobExtensionAuthOutput? = null
 )
  {
   companion object {
     fun fromList(pigeonVar_list: List<Any?>): AuthPasskeyExtensionResult {
       val appid = pigeonVar_list[0] as Boolean?
       val prf = pigeonVar_list[1] as PrfExtensionOutput?
-      return AuthPasskeyExtensionResult(appid, prf)
+      val largeBlob = pigeonVar_list[2] as LargeBlobExtensionAuthOutput?
+      return AuthPasskeyExtensionResult(appid, prf, largeBlob)
     }
   }
   fun toList(): List<Any?> {
     return listOf(
       appid,
       prf,
+      largeBlob,
     )
   }
   override fun equals(other: Any?): Boolean {
@@ -986,20 +998,24 @@ data class RegisterGenerateOptionExtension (
   /** Credential properties extension */
   val credProps: Boolean,
   /** PRF extension input parameters */
-  val prf: PrfExtensionInput? = null
+  val prf: PrfExtensionInput? = null,
+  /** LargeBlob extension input for registration */
+  val largeBlob: LargeBlobExtensionRegistrationInput? = null
 )
  {
   companion object {
     fun fromList(pigeonVar_list: List<Any?>): RegisterGenerateOptionExtension {
       val credProps = pigeonVar_list[0] as Boolean
       val prf = pigeonVar_list[1] as PrfExtensionInput?
-      return RegisterGenerateOptionExtension(credProps, prf)
+      val largeBlob = pigeonVar_list[2] as LargeBlobExtensionRegistrationInput?
+      return RegisterGenerateOptionExtension(credProps, prf, largeBlob)
     }
   }
   fun toList(): List<Any?> {
     return listOf(
       credProps,
       prf,
+      largeBlob,
     )
   }
   override fun equals(other: Any?): Boolean {
@@ -1122,6 +1138,150 @@ data class PrfExtensionOutput (
   }
   override fun equals(other: Any?): Boolean {
     if (other !is PrfExtensionOutput) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    return MessagesPigeonUtils.deepEquals(toList(), other.toList())  }
+
+  override fun hashCode(): Int = toList().hashCode()
+}
+
+/**
+ * LargeBlob extension input for registration
+ * Indicates whether the authenticator should support largeBlob storage
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class LargeBlobExtensionRegistrationInput (
+  /** Support preference: "preferred" or "required" */
+  val support: String? = null
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): LargeBlobExtensionRegistrationInput {
+      val support = pigeonVar_list[0] as String?
+      return LargeBlobExtensionRegistrationInput(support)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      support,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other !is LargeBlobExtensionRegistrationInput) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    return MessagesPigeonUtils.deepEquals(toList(), other.toList())  }
+
+  override fun hashCode(): Int = toList().hashCode()
+}
+
+/**
+ * LargeBlob extension output for registration
+ * Indicates whether the authenticator supports largeBlob storage
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class LargeBlobExtensionRegistrationOutput (
+  /** Whether the authenticator supports largeBlob */
+  val supported: Boolean? = null
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): LargeBlobExtensionRegistrationOutput {
+      val supported = pigeonVar_list[0] as Boolean?
+      return LargeBlobExtensionRegistrationOutput(supported)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      supported,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other !is LargeBlobExtensionRegistrationOutput) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    return MessagesPigeonUtils.deepEquals(toList(), other.toList())  }
+
+  override fun hashCode(): Int = toList().hashCode()
+}
+
+/**
+ * LargeBlob extension input for authentication
+ * Supports reading or writing blob data (mutually exclusive per WebAuthn spec)
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class LargeBlobExtensionAuthInput (
+  /** Set to true to read the stored blob */
+  val read: Boolean? = null,
+  /** Data to write to the blob */
+  val write: ByteArray? = null
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): LargeBlobExtensionAuthInput {
+      val read = pigeonVar_list[0] as Boolean?
+      val write = pigeonVar_list[1] as ByteArray?
+      return LargeBlobExtensionAuthInput(read, write)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      read,
+      write,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other !is LargeBlobExtensionAuthInput) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    return MessagesPigeonUtils.deepEquals(toList(), other.toList())  }
+
+  override fun hashCode(): Int = toList().hashCode()
+}
+
+/**
+ * LargeBlob extension output for authentication
+ * Contains the read blob data or write success status
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class LargeBlobExtensionAuthOutput (
+  /** The retrieved blob data (when read was requested) */
+  val blob: ByteArray? = null,
+  /** Whether the write operation succeeded (when write was requested) */
+  val written: Boolean? = null
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): LargeBlobExtensionAuthOutput {
+      val blob = pigeonVar_list[0] as ByteArray?
+      val written = pigeonVar_list[1] as Boolean?
+      return LargeBlobExtensionAuthOutput(blob, written)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      blob,
+      written,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other !is LargeBlobExtensionAuthOutput) {
       return false
     }
     if (this === other) {
@@ -1254,6 +1414,26 @@ private open class MessagesPigeonCodec : StandardMessageCodec() {
           PrfExtensionOutput.fromList(it)
         }
       }
+      153.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          LargeBlobExtensionRegistrationInput.fromList(it)
+        }
+      }
+      154.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          LargeBlobExtensionRegistrationOutput.fromList(it)
+        }
+      }
+      155.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          LargeBlobExtensionAuthInput.fromList(it)
+        }
+      }
+      156.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          LargeBlobExtensionAuthOutput.fromList(it)
+        }
+      }
       else -> super.readValueOfType(type, buffer)
     }
   }
@@ -1353,6 +1533,22 @@ private open class MessagesPigeonCodec : StandardMessageCodec() {
       }
       is PrfExtensionOutput -> {
         stream.write(152)
+        writeValue(stream, value.toList())
+      }
+      is LargeBlobExtensionRegistrationInput -> {
+        stream.write(153)
+        writeValue(stream, value.toList())
+      }
+      is LargeBlobExtensionRegistrationOutput -> {
+        stream.write(154)
+        writeValue(stream, value.toList())
+      }
+      is LargeBlobExtensionAuthInput -> {
+        stream.write(155)
+        writeValue(stream, value.toList())
+      }
+      is LargeBlobExtensionAuthOutput -> {
+        stream.write(156)
         writeValue(stream, value.toList())
       }
       else -> super.writeValue(stream, value)

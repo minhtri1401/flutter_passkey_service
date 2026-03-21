@@ -222,6 +222,7 @@ class AuthGenerateOptionExtension {
   AuthGenerateOptionExtension({
     this.appid,
     this.prf,
+    this.largeBlob,
   });
 
   /// AppID extension
@@ -230,10 +231,14 @@ class AuthGenerateOptionExtension {
   /// PRF extension input parameters
   PrfExtensionInput? prf;
 
+  /// LargeBlob extension input for authentication
+  LargeBlobExtensionAuthInput? largeBlob;
+
   List<Object?> _toList() {
     return <Object?>[
       appid,
       prf,
+      largeBlob,
     ];
   }
 
@@ -245,6 +250,7 @@ class AuthGenerateOptionExtension {
     return AuthGenerateOptionExtension(
       appid: result[0] as bool?,
       prf: result[1] as PrfExtensionInput?,
+      largeBlob: result[2] as LargeBlobExtensionAuthInput?,
     );
   }
 
@@ -600,6 +606,7 @@ class CreatePasskeyExtension {
   CreatePasskeyExtension({
     this.credProps,
     this.prf,
+    this.largeBlob,
   });
 
   /// Credential properties extension (optional)
@@ -608,10 +615,14 @@ class CreatePasskeyExtension {
   /// PRF extension (optional)
   PrfExtensionOutput? prf;
 
+  /// LargeBlob extension output for registration
+  LargeBlobExtensionRegistrationOutput? largeBlob;
+
   List<Object?> _toList() {
     return <Object?>[
       credProps,
       prf,
+      largeBlob,
     ];
   }
 
@@ -623,6 +634,7 @@ class CreatePasskeyExtension {
     return CreatePasskeyExtension(
       credProps: result[0] as CreatePasskeyExtensionProps?,
       prf: result[1] as PrfExtensionOutput?,
+      largeBlob: result[2] as LargeBlobExtensionRegistrationOutput?,
     );
   }
 
@@ -771,6 +783,7 @@ class AuthPasskeyExtensionResult {
   AuthPasskeyExtensionResult({
     this.appid,
     this.prf,
+    this.largeBlob,
   });
 
   /// AppID extension result
@@ -779,10 +792,14 @@ class AuthPasskeyExtensionResult {
   /// PRF extension output results
   PrfExtensionOutput? prf;
 
+  /// LargeBlob extension output for authentication
+  LargeBlobExtensionAuthOutput? largeBlob;
+
   List<Object?> _toList() {
     return <Object?>[
       appid,
       prf,
+      largeBlob,
     ];
   }
 
@@ -794,6 +811,7 @@ class AuthPasskeyExtensionResult {
     return AuthPasskeyExtensionResult(
       appid: result[0] as bool?,
       prf: result[1] as PrfExtensionOutput?,
+      largeBlob: result[2] as LargeBlobExtensionAuthOutput?,
     );
   }
 
@@ -1253,6 +1271,7 @@ class RegisterGenerateOptionExtension {
   RegisterGenerateOptionExtension({
     required this.credProps,
     this.prf,
+    this.largeBlob,
   });
 
   /// Credential properties extension
@@ -1261,10 +1280,14 @@ class RegisterGenerateOptionExtension {
   /// PRF extension input parameters
   PrfExtensionInput? prf;
 
+  /// LargeBlob extension input for registration
+  LargeBlobExtensionRegistrationInput? largeBlob;
+
   List<Object?> _toList() {
     return <Object?>[
       credProps,
       prf,
+      largeBlob,
     ];
   }
 
@@ -1276,6 +1299,7 @@ class RegisterGenerateOptionExtension {
     return RegisterGenerateOptionExtension(
       credProps: result[0]! as bool,
       prf: result[1] as PrfExtensionInput?,
+      largeBlob: result[2] as LargeBlobExtensionRegistrationInput?,
     );
   }
 
@@ -1453,6 +1477,194 @@ class PrfExtensionOutput {
 ;
 }
 
+/// LargeBlob extension input for registration
+/// Indicates whether the authenticator should support largeBlob storage
+class LargeBlobExtensionRegistrationInput {
+  LargeBlobExtensionRegistrationInput({
+    this.support,
+  });
+
+  /// Support preference: "preferred" or "required"
+  String? support;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      support,
+    ];
+  }
+
+  Object encode() {
+    return _toList();  }
+
+  static LargeBlobExtensionRegistrationInput decode(Object result) {
+    result as List<Object?>;
+    return LargeBlobExtensionRegistrationInput(
+      support: result[0] as String?,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! LargeBlobExtensionRegistrationInput || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(encode(), other.encode());
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => Object.hashAll(_toList())
+;
+}
+
+/// LargeBlob extension output for registration
+/// Indicates whether the authenticator supports largeBlob storage
+class LargeBlobExtensionRegistrationOutput {
+  LargeBlobExtensionRegistrationOutput({
+    this.supported,
+  });
+
+  /// Whether the authenticator supports largeBlob
+  bool? supported;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      supported,
+    ];
+  }
+
+  Object encode() {
+    return _toList();  }
+
+  static LargeBlobExtensionRegistrationOutput decode(Object result) {
+    result as List<Object?>;
+    return LargeBlobExtensionRegistrationOutput(
+      supported: result[0] as bool?,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! LargeBlobExtensionRegistrationOutput || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(encode(), other.encode());
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => Object.hashAll(_toList())
+;
+}
+
+/// LargeBlob extension input for authentication
+/// Supports reading or writing blob data (mutually exclusive per WebAuthn spec)
+class LargeBlobExtensionAuthInput {
+  LargeBlobExtensionAuthInput({
+    this.read,
+    this.write,
+  });
+
+  /// Set to true to read the stored blob
+  bool? read;
+
+  /// Data to write to the blob
+  Uint8List? write;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      read,
+      write,
+    ];
+  }
+
+  Object encode() {
+    return _toList();  }
+
+  static LargeBlobExtensionAuthInput decode(Object result) {
+    result as List<Object?>;
+    return LargeBlobExtensionAuthInput(
+      read: result[0] as bool?,
+      write: result[1] as Uint8List?,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! LargeBlobExtensionAuthInput || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(encode(), other.encode());
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => Object.hashAll(_toList())
+;
+}
+
+/// LargeBlob extension output for authentication
+/// Contains the read blob data or write success status
+class LargeBlobExtensionAuthOutput {
+  LargeBlobExtensionAuthOutput({
+    this.blob,
+    this.written,
+  });
+
+  /// The retrieved blob data (when read was requested)
+  Uint8List? blob;
+
+  /// Whether the write operation succeeded (when write was requested)
+  bool? written;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      blob,
+      written,
+    ];
+  }
+
+  Object encode() {
+    return _toList();  }
+
+  static LargeBlobExtensionAuthOutput decode(Object result) {
+    result as List<Object?>;
+    return LargeBlobExtensionAuthOutput(
+      blob: result[0] as Uint8List?,
+      written: result[1] as bool?,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! LargeBlobExtensionAuthOutput || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(encode(), other.encode());
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => Object.hashAll(_toList())
+;
+}
+
 
 class _PigeonCodec extends StandardMessageCodec {
   const _PigeonCodec();
@@ -1533,6 +1745,18 @@ class _PigeonCodec extends StandardMessageCodec {
     }    else if (value is PrfExtensionOutput) {
       buffer.putUint8(152);
       writeValue(buffer, value.encode());
+    }    else if (value is LargeBlobExtensionRegistrationInput) {
+      buffer.putUint8(153);
+      writeValue(buffer, value.encode());
+    }    else if (value is LargeBlobExtensionRegistrationOutput) {
+      buffer.putUint8(154);
+      writeValue(buffer, value.encode());
+    }    else if (value is LargeBlobExtensionAuthInput) {
+      buffer.putUint8(155);
+      writeValue(buffer, value.encode());
+    }    else if (value is LargeBlobExtensionAuthOutput) {
+      buffer.putUint8(156);
+      writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
     }
@@ -1590,6 +1814,14 @@ class _PigeonCodec extends StandardMessageCodec {
         return PrfExtensionInput.decode(readValue(buffer)!);
       case 152:
         return PrfExtensionOutput.decode(readValue(buffer)!);
+      case 153:
+        return LargeBlobExtensionRegistrationInput.decode(readValue(buffer)!);
+      case 154:
+        return LargeBlobExtensionRegistrationOutput.decode(readValue(buffer)!);
+      case 155:
+        return LargeBlobExtensionAuthInput.decode(readValue(buffer)!);
+      case 156:
+        return LargeBlobExtensionAuthOutput.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
     }

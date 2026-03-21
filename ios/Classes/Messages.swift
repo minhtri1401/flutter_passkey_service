@@ -266,22 +266,27 @@ struct AuthGenerateOptionExtension: Hashable {
   var appid: Bool? = nil
   /// PRF extension input parameters
   var prf: PrfExtensionInput? = nil
+  /// LargeBlob extension input for authentication
+  var largeBlob: LargeBlobExtensionAuthInput? = nil
 
 
   // swift-format-ignore: AlwaysUseLowerCamelCase
   static func fromList(_ pigeonVar_list: [Any?]) -> AuthGenerateOptionExtension? {
     let appid: Bool? = nilOrValue(pigeonVar_list[0])
     let prf: PrfExtensionInput? = nilOrValue(pigeonVar_list[1])
+    let largeBlob: LargeBlobExtensionAuthInput? = nilOrValue(pigeonVar_list[2])
 
     return AuthGenerateOptionExtension(
       appid: appid,
-      prf: prf
+      prf: prf,
+      largeBlob: largeBlob
     )
   }
   func toList() -> [Any?] {
     return [
       appid,
       prf,
+      largeBlob,
     ]
   }
   static func == (lhs: AuthGenerateOptionExtension, rhs: AuthGenerateOptionExtension) -> Bool {
@@ -534,22 +539,27 @@ struct CreatePasskeyExtension: Hashable {
   var credProps: CreatePasskeyExtensionProps? = nil
   /// PRF extension (optional)
   var prf: PrfExtensionOutput? = nil
+  /// LargeBlob extension output for registration
+  var largeBlob: LargeBlobExtensionRegistrationOutput? = nil
 
 
   // swift-format-ignore: AlwaysUseLowerCamelCase
   static func fromList(_ pigeonVar_list: [Any?]) -> CreatePasskeyExtension? {
     let credProps: CreatePasskeyExtensionProps? = nilOrValue(pigeonVar_list[0])
     let prf: PrfExtensionOutput? = nilOrValue(pigeonVar_list[1])
+    let largeBlob: LargeBlobExtensionRegistrationOutput? = nilOrValue(pigeonVar_list[2])
 
     return CreatePasskeyExtension(
       credProps: credProps,
-      prf: prf
+      prf: prf,
+      largeBlob: largeBlob
     )
   }
   func toList() -> [Any?] {
     return [
       credProps,
       prf,
+      largeBlob,
     ]
   }
   static func == (lhs: CreatePasskeyExtension, rhs: CreatePasskeyExtension) -> Bool {
@@ -653,22 +663,27 @@ struct AuthPasskeyExtensionResult: Hashable {
   var appid: Bool? = nil
   /// PRF extension output results
   var prf: PrfExtensionOutput? = nil
+  /// LargeBlob extension output for authentication
+  var largeBlob: LargeBlobExtensionAuthOutput? = nil
 
 
   // swift-format-ignore: AlwaysUseLowerCamelCase
   static func fromList(_ pigeonVar_list: [Any?]) -> AuthPasskeyExtensionResult? {
     let appid: Bool? = nilOrValue(pigeonVar_list[0])
     let prf: PrfExtensionOutput? = nilOrValue(pigeonVar_list[1])
+    let largeBlob: LargeBlobExtensionAuthOutput? = nilOrValue(pigeonVar_list[2])
 
     return AuthPasskeyExtensionResult(
       appid: appid,
-      prf: prf
+      prf: prf,
+      largeBlob: largeBlob
     )
   }
   func toList() -> [Any?] {
     return [
       appid,
       prf,
+      largeBlob,
     ]
   }
   static func == (lhs: AuthPasskeyExtensionResult, rhs: AuthPasskeyExtensionResult) -> Bool {
@@ -992,22 +1007,27 @@ struct RegisterGenerateOptionExtension: Hashable {
   var credProps: Bool
   /// PRF extension input parameters
   var prf: PrfExtensionInput? = nil
+  /// LargeBlob extension input for registration
+  var largeBlob: LargeBlobExtensionRegistrationInput? = nil
 
 
   // swift-format-ignore: AlwaysUseLowerCamelCase
   static func fromList(_ pigeonVar_list: [Any?]) -> RegisterGenerateOptionExtension? {
     let credProps = pigeonVar_list[0] as! Bool
     let prf: PrfExtensionInput? = nilOrValue(pigeonVar_list[1])
+    let largeBlob: LargeBlobExtensionRegistrationInput? = nilOrValue(pigeonVar_list[2])
 
     return RegisterGenerateOptionExtension(
       credProps: credProps,
-      prf: prf
+      prf: prf,
+      largeBlob: largeBlob
     )
   }
   func toList() -> [Any?] {
     return [
       credProps,
       prf,
+      largeBlob,
     ]
   }
   static func == (lhs: RegisterGenerateOptionExtension, rhs: RegisterGenerateOptionExtension) -> Bool {
@@ -1124,6 +1144,132 @@ struct PrfExtensionOutput: Hashable {
   }
 }
 
+/// LargeBlob extension input for registration
+/// Indicates whether the authenticator should support largeBlob storage
+///
+/// Generated class from Pigeon that represents data sent in messages.
+struct LargeBlobExtensionRegistrationInput: Hashable {
+  /// Support preference: "preferred" or "required"
+  var support: String? = nil
+
+
+  // swift-format-ignore: AlwaysUseLowerCamelCase
+  static func fromList(_ pigeonVar_list: [Any?]) -> LargeBlobExtensionRegistrationInput? {
+    let support: String? = nilOrValue(pigeonVar_list[0])
+
+    return LargeBlobExtensionRegistrationInput(
+      support: support
+    )
+  }
+  func toList() -> [Any?] {
+    return [
+      support
+    ]
+  }
+  static func == (lhs: LargeBlobExtensionRegistrationInput, rhs: LargeBlobExtensionRegistrationInput) -> Bool {
+    return deepEqualsMessages(lhs.toList(), rhs.toList())  }
+  func hash(into hasher: inout Hasher) {
+    deepHashMessages(value: toList(), hasher: &hasher)
+  }
+}
+
+/// LargeBlob extension output for registration
+/// Indicates whether the authenticator supports largeBlob storage
+///
+/// Generated class from Pigeon that represents data sent in messages.
+struct LargeBlobExtensionRegistrationOutput: Hashable {
+  /// Whether the authenticator supports largeBlob
+  var supported: Bool? = nil
+
+
+  // swift-format-ignore: AlwaysUseLowerCamelCase
+  static func fromList(_ pigeonVar_list: [Any?]) -> LargeBlobExtensionRegistrationOutput? {
+    let supported: Bool? = nilOrValue(pigeonVar_list[0])
+
+    return LargeBlobExtensionRegistrationOutput(
+      supported: supported
+    )
+  }
+  func toList() -> [Any?] {
+    return [
+      supported
+    ]
+  }
+  static func == (lhs: LargeBlobExtensionRegistrationOutput, rhs: LargeBlobExtensionRegistrationOutput) -> Bool {
+    return deepEqualsMessages(lhs.toList(), rhs.toList())  }
+  func hash(into hasher: inout Hasher) {
+    deepHashMessages(value: toList(), hasher: &hasher)
+  }
+}
+
+/// LargeBlob extension input for authentication
+/// Supports reading or writing blob data (mutually exclusive per WebAuthn spec)
+///
+/// Generated class from Pigeon that represents data sent in messages.
+struct LargeBlobExtensionAuthInput: Hashable {
+  /// Set to true to read the stored blob
+  var read: Bool? = nil
+  /// Data to write to the blob
+  var write: FlutterStandardTypedData? = nil
+
+
+  // swift-format-ignore: AlwaysUseLowerCamelCase
+  static func fromList(_ pigeonVar_list: [Any?]) -> LargeBlobExtensionAuthInput? {
+    let read: Bool? = nilOrValue(pigeonVar_list[0])
+    let write: FlutterStandardTypedData? = nilOrValue(pigeonVar_list[1])
+
+    return LargeBlobExtensionAuthInput(
+      read: read,
+      write: write
+    )
+  }
+  func toList() -> [Any?] {
+    return [
+      read,
+      write,
+    ]
+  }
+  static func == (lhs: LargeBlobExtensionAuthInput, rhs: LargeBlobExtensionAuthInput) -> Bool {
+    return deepEqualsMessages(lhs.toList(), rhs.toList())  }
+  func hash(into hasher: inout Hasher) {
+    deepHashMessages(value: toList(), hasher: &hasher)
+  }
+}
+
+/// LargeBlob extension output for authentication
+/// Contains the read blob data or write success status
+///
+/// Generated class from Pigeon that represents data sent in messages.
+struct LargeBlobExtensionAuthOutput: Hashable {
+  /// The retrieved blob data (when read was requested)
+  var blob: FlutterStandardTypedData? = nil
+  /// Whether the write operation succeeded (when write was requested)
+  var written: Bool? = nil
+
+
+  // swift-format-ignore: AlwaysUseLowerCamelCase
+  static func fromList(_ pigeonVar_list: [Any?]) -> LargeBlobExtensionAuthOutput? {
+    let blob: FlutterStandardTypedData? = nilOrValue(pigeonVar_list[0])
+    let written: Bool? = nilOrValue(pigeonVar_list[1])
+
+    return LargeBlobExtensionAuthOutput(
+      blob: blob,
+      written: written
+    )
+  }
+  func toList() -> [Any?] {
+    return [
+      blob,
+      written,
+    ]
+  }
+  static func == (lhs: LargeBlobExtensionAuthOutput, rhs: LargeBlobExtensionAuthOutput) -> Bool {
+    return deepEqualsMessages(lhs.toList(), rhs.toList())  }
+  func hash(into hasher: inout Hasher) {
+    deepHashMessages(value: toList(), hasher: &hasher)
+  }
+}
+
 private class MessagesPigeonCodecReader: FlutterStandardReader {
   override func readValue(ofType type: UInt8) -> Any? {
     switch type {
@@ -1179,6 +1325,14 @@ private class MessagesPigeonCodecReader: FlutterStandardReader {
       return PrfExtensionInput.fromList(self.readValue() as! [Any?])
     case 152:
       return PrfExtensionOutput.fromList(self.readValue() as! [Any?])
+    case 153:
+      return LargeBlobExtensionRegistrationInput.fromList(self.readValue() as! [Any?])
+    case 154:
+      return LargeBlobExtensionRegistrationOutput.fromList(self.readValue() as! [Any?])
+    case 155:
+      return LargeBlobExtensionAuthInput.fromList(self.readValue() as! [Any?])
+    case 156:
+      return LargeBlobExtensionAuthOutput.fromList(self.readValue() as! [Any?])
     default:
       return super.readValue(ofType: type)
     }
@@ -1258,6 +1412,18 @@ private class MessagesPigeonCodecWriter: FlutterStandardWriter {
       super.writeValue(value.toList())
     } else if let value = value as? PrfExtensionOutput {
       super.writeByte(152)
+      super.writeValue(value.toList())
+    } else if let value = value as? LargeBlobExtensionRegistrationInput {
+      super.writeByte(153)
+      super.writeValue(value.toList())
+    } else if let value = value as? LargeBlobExtensionRegistrationOutput {
+      super.writeByte(154)
+      super.writeValue(value.toList())
+    } else if let value = value as? LargeBlobExtensionAuthInput {
+      super.writeByte(155)
+      super.writeValue(value.toList())
+    } else if let value = value as? LargeBlobExtensionAuthOutput {
+      super.writeByte(156)
       super.writeValue(value.toList())
     } else {
       super.writeValue(value)
