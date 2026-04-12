@@ -178,7 +178,7 @@ class PasskeyAuthServiceImpl(private val credentialManager: CredentialManager) :
             // Parse the JSON response manually since we can't use @Serializable with Pigeon
             val responseJson = (response as CreatePublicKeyCredentialResponse).registrationResponseJson
             val jsonElement = Json.parseToJsonElement(responseJson).jsonObject
-            val responseData = buildCreatePasskeyResponseData(jsonElement)
+            val responseData = buildCreatePasskeyResponseData(jsonElement, option.user.name)
             emit(responseData)
         } catch (e: Exception) {
             throw exceptionHandler.handleRegistrationException(e)
@@ -222,7 +222,7 @@ class PasskeyAuthServiceImpl(private val credentialManager: CredentialManager) :
             response = parseGetPasskeyResponse(jsonElement["response"]!!.jsonObject),
             type = jsonElement["type"]!!.jsonPrimitive.content,
             clientExtensionResults = jsonElement["clientExtensionResults"]?.jsonObject?.let { parseAuthPasskeyExtensionResult(it) },
-            username = jsonElement["username"]?.jsonPrimitive?.content ?: "username"
+            username = ""
         )
     }
 
@@ -286,7 +286,7 @@ class PasskeyAuthServiceImpl(private val credentialManager: CredentialManager) :
         }.toString()
     }
 
-    private fun buildCreatePasskeyResponseData(jsonElement: JsonObject): CreatePasskeyResponseData {
+    private fun buildCreatePasskeyResponseData(jsonElement: JsonObject, username: String): CreatePasskeyResponseData {
         return CreatePasskeyResponseData(
             rawId = jsonElement["rawId"]!!.jsonPrimitive.content,
             authenticatorAttachment = jsonElement["authenticatorAttachment"]?.jsonPrimitive?.content,
@@ -294,7 +294,7 @@ class PasskeyAuthServiceImpl(private val credentialManager: CredentialManager) :
             id = jsonElement["id"]!!.jsonPrimitive.content,
             response = parseCreatePasskeyResponse(jsonElement["response"]!!.jsonObject),
             clientExtensionResults = parseCreatePasskeyExtension(jsonElement["clientExtensionResults"]!!.jsonObject),
-            username = jsonElement["username"]?.jsonPrimitive?.content ?: "username"
+            username = username
         )
     }
 

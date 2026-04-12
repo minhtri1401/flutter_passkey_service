@@ -80,7 +80,7 @@ class AuthenticateController: NSObject, ASAuthorizationControllerDelegate, ASAut
                 ),
                 type: "public-key",
                 clientExtensionResults: AuthPasskeyExtensionResult(appid: nil, prf: prfOutput, largeBlob: largeBlobOutput),
-                username: "username"
+                username: ""
             )
             completion?(.success(response))
             break

@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.6]
+
+### Fixed
+- Replaced hardcoded `username: "username"` in Passkey authentication and registration responses with dynamically passed usernames for registration and empty strings for authentication across iOS and Android, conforming strictly with the WebAuthn standard and correct mapping expectations.
+
 ## [0.0.5] - 2026-03-21
 
 ### Added
