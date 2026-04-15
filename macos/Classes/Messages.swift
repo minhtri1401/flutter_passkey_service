@@ -218,6 +218,8 @@ struct AuthGenerateOptionResponseData: Hashable {
   var hints: [String?]? = nil
   /// Extensions for authentication
   var extensions: AuthGenerateOptionExtension? = nil
+  /// Prefer credentials immediately available on-device (no QR/remote prompts)
+  var preferImmediatelyAvailableCredentials: Bool? = nil
 
 
   // swift-format-ignore: AlwaysUseLowerCamelCase
@@ -229,6 +231,7 @@ struct AuthGenerateOptionResponseData: Hashable {
     let userVerification = pigeonVar_list[4] as! String
     let hints: [String?]? = nilOrValue(pigeonVar_list[5])
     let extensions: AuthGenerateOptionExtension? = nilOrValue(pigeonVar_list[6])
+    let preferImmediatelyAvailableCredentials: Bool? = nilOrValue(pigeonVar_list[7])
 
     return AuthGenerateOptionResponseData(
       rpId: rpId,
@@ -237,7 +240,8 @@ struct AuthGenerateOptionResponseData: Hashable {
       timeout: timeout,
       userVerification: userVerification,
       hints: hints,
-      extensions: extensions
+      extensions: extensions,
+      preferImmediatelyAvailableCredentials: preferImmediatelyAvailableCredentials
     )
   }
   func toList() -> [Any?] {
@@ -249,6 +253,7 @@ struct AuthGenerateOptionResponseData: Hashable {
       userVerification,
       hints,
       extensions,
+      preferImmediatelyAvailableCredentials,
     ]
   }
   static func == (lhs: AuthGenerateOptionResponseData, rhs: AuthGenerateOptionResponseData) -> Bool {
