@@ -76,7 +76,7 @@ class PasskeyAuthServiceImpl: PasskeyAuthService {
         }
 
         authenController = AuthenticateController(window: self.window, completion: completion)
-        authenController?.run(request: credentialRequest, preferImmediatelyAvailableCredentials: false)
+        authenController?.run(request: credentialRequest, preferImmediatelyAvailableCredentials: request.preferImmediatelyAvailableCredentials ?? false)
 
     }
 

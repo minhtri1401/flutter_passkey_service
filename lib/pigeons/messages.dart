@@ -90,6 +90,7 @@ class AuthGenerateOptionResponseData {
     required this.userVerification,
     this.hints,
     this.extensions,
+    this.preferImmediatelyAvailableCredentials,
   });
 
   /// The relying party identifier
@@ -112,6 +113,9 @@ class AuthGenerateOptionResponseData {
 
   /// Extensions for authentication
   AuthGenerateOptionExtension? extensions;
+
+  /// Prefer credentials immediately available on-device (no QR/remote prompts)
+  bool? preferImmediatelyAvailableCredentials;
 }
 
 /// Represents extensions for authentication options
