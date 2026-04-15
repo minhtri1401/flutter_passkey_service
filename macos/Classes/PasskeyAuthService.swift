@@ -130,7 +130,7 @@ class PasskeyAuthServiceImpl: PasskeyAuthService {
             }
         }
 
-        registerController = RegisterController(window: self.window, completion: completion)
+        registerController = RegisterController(window: self.window, username: option.user.name, completion: completion)
         registerController?.run(request: request)
     }
 

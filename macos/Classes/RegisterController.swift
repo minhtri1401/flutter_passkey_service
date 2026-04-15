@@ -6,11 +6,13 @@ import Foundation
 class RegisterController: NSObject, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
     public var completion: ((Result<CreatePasskeyResponseData, Error>) -> Void)?
     private let window: ASPresentationAnchor
+    private let username: String
     private var authorizationController: ASAuthorizationController? = nil
 
-    init(window: ASPresentationAnchor, completion: @escaping ((Result<CreatePasskeyResponseData, Error>) -> Void)) {
+    init(window: ASPresentationAnchor, username: String, completion: @escaping ((Result<CreatePasskeyResponseData, Error>) -> Void)) {
         self.completion = completion
         self.window = window
+        self.username = username
     }
 
     func run(request: ASAuthorizationPlatformPublicKeyCredentialRegistrationRequest) {
@@ -58,7 +60,7 @@ class RegisterController: NSObject, ASAuthorizationControllerDelegate, ASAuthori
                     prf: prfOutput,
                     largeBlob: largeBlobOutput
                 ),
-                username: "username"
+                username: username
             )
             completion?(.success(response))
             break
