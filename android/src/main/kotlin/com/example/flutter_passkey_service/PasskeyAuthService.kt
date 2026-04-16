@@ -5,7 +5,6 @@ import androidx.credentials.CreatePublicKeyCredentialRequest
 import androidx.credentials.CreatePublicKeyCredentialResponse
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
-import androidx.credentials.GetPasswordOption
 import androidx.credentials.GetPublicKeyCredentialOption
 import androidx.credentials.PublicKeyCredential
 import android.util.Base64
@@ -192,21 +191,19 @@ class PasskeyAuthServiceImpl(private val credentialManager: CredentialManager) :
         try {
             // Convert Pigeon object to JSON manually
             val requestJson = buildGetPublicKeyCredentialOption(request)
-            
-            val getPasswordOption = GetPasswordOption(isAutoSelectAllowed = true)
-            val getCredentialRequest =
-                GetCredentialRequest(
-                    listOf(
-                        getPasswordOption,
-                        GetPublicKeyCredentialOption(requestJson)
-                    )
+
+            val getCredentialRequest = GetCredentialRequest.Builder()
+                .addCredentialOption(GetPublicKeyCredentialOption(requestJson))
+                .setPreferImmediatelyAvailableCredentials(
+                    request.preferImmediatelyAvailableCredentials ?: false
                 )
+                .build()
             val response = credentialManager.getCredential(activityContext, getCredentialRequest)
             val cred = response.credential as PublicKeyCredential
             // Parse the JSON response manually
             val responseJson = cred.authenticationResponseJson
             val jsonElement = Json.parseToJsonElement(responseJson).jsonObject
-            
+
             val responseData = buildGetPasskeyAuthenticationResponseData(jsonElement)
             emit(responseData)
         } catch (e: Exception) {
@@ -332,7 +329,7 @@ class PasskeyAuthServiceImpl(private val credentialManager: CredentialManager) :
                 }
             }
             putJsonObject("authenticatorSelection") {
-                put("residentKey", "required") // Force required
+                put("residentKey", option.authenticatorSelection.requireResidentKey)
                 put("userVerification", option.authenticatorSelection.userVerification)
                 put("requireResidentKey", option.authenticatorSelection.requireResidentKey)
                 put("authenticatorAttachment", option.authenticatorSelection.authenticatorAttachment)
@@ -369,7 +366,7 @@ class PasskeyAuthServiceImpl(private val credentialManager: CredentialManager) :
             publicKey = json["publicKey"]!!.jsonPrimitive.content
         )
     }
-    
+
     private fun parseCreatePasskeyExtension(json: JsonObject): CreatePasskeyExtension {
         return CreatePasskeyExtension(
             credProps = json["credProps"]?.jsonObject?.let { parseCreatePasskeyExtensionProps(it) },
@@ -377,13 +374,13 @@ class PasskeyAuthServiceImpl(private val credentialManager: CredentialManager) :
             largeBlob = json["largeBlob"]?.jsonObject?.let { parseLargeBlobRegistrationOutput(it) }
         )
     }
-    
+
     private fun parseCreatePasskeyExtensionProps(json: JsonObject): CreatePasskeyExtensionProps {
         return CreatePasskeyExtensionProps(
             rk = json["rk"]!!.jsonPrimitive.boolean
         )
     }
-    
+
     private fun parseCreatePasskeyExtensionPrf(json: JsonObject): PrfExtensionOutput {
         val resultsMap = mutableMapOf<String?, String?>()
         json["results"]?.jsonObject?.forEach { (key, value) ->
@@ -394,7 +391,7 @@ class PasskeyAuthServiceImpl(private val credentialManager: CredentialManager) :
             results = if (resultsMap.isNotEmpty()) resultsMap else null
         )
     }
-    
+
     private fun parseLargeBlobRegistrationOutput(json: JsonObject): LargeBlobExtensionRegistrationOutput {
         return LargeBlobExtensionRegistrationOutput(
             supported = json["supported"]?.jsonPrimitive?.boolean
