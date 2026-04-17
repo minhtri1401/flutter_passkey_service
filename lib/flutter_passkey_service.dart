@@ -58,11 +58,15 @@ class FlutterPasskeyService {
     required String username,
     String displayName = '',
     bool enablePrf = false,
+    Map<String, String?>? prfEval,
     bool enableLargeBlob = false,
     int timeout = 60000,
     String attestation = 'none',
     List<RegisterGenerateOptionExcludeCredential> excludeCredentials = const [],
     String authenticatorAttachment = 'platform',
+    String residentKey = 'preferred',
+    bool requireResidentKey = false,
+    String userVerification = 'required',
   }) {
     return RegisterGenerateOptionData(
       challenge: challenge,
@@ -86,14 +90,14 @@ class FlutterPasskeyService {
       attestation: attestation,
       excludeCredentials: excludeCredentials,
       authenticatorSelection: RegisterGenerateOptionAuthenticatorSelection(
-        residentKey: 'preferred',
-        userVerification: 'required',
-        requireResidentKey: false,
+        residentKey: residentKey,
+        userVerification: userVerification,
+        requireResidentKey: requireResidentKey,
         authenticatorAttachment: authenticatorAttachment,
       ),
       extensions: RegisterGenerateOptionExtension(
         credProps: true,
-        prf: enablePrf ? PrfExtensionInput(eval: null) : null,
+        prf: enablePrf ? PrfExtensionInput(eval: prfEval) : null,
         largeBlob: enableLargeBlob
             ? LargeBlobExtensionRegistrationInput(support: 'preferred')
             : null,
