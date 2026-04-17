@@ -235,13 +235,15 @@ class PasskeyAuthServiceImpl(private val credentialManager: CredentialManager) :
         return buildJsonObject {
             put("challenge", request.challenge)
             put("rpId", request.rpId)
-            putJsonArray("allowCredentials") {
-                request.allowCredentials.forEach { cred ->
-                    addJsonObject {
-                        put("type", cred.type)
-                        put("id", cred.id)
-                        putJsonArray("transports") {
-                            cred.transports.forEach { add(it) }
+            if (request.allowCredentials.isNotEmpty()) {
+                putJsonArray("allowCredentials") {
+                    request.allowCredentials.forEach { cred ->
+                        addJsonObject {
+                            put("type", cred.type)
+                            put("id", cred.id)
+                            putJsonArray("transports") {
+                                cred.transports.forEach { add(it) }
+                            }
                         }
                     }
                 }
@@ -329,7 +331,7 @@ class PasskeyAuthServiceImpl(private val credentialManager: CredentialManager) :
                 }
             }
             putJsonObject("authenticatorSelection") {
-                put("residentKey", option.authenticatorSelection.requireResidentKey)
+                put("residentKey", option.authenticatorSelection.residentKey)
                 put("userVerification", option.authenticatorSelection.userVerification)
                 put("requireResidentKey", option.authenticatorSelection.requireResidentKey)
                 put("authenticatorAttachment", option.authenticatorSelection.authenticatorAttachment)
