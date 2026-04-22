@@ -1,5 +1,5 @@
 name: flutter_passkey_service
-description: "A comprehensive Flutter plugin for seamless Passkey (WebAuthn) integration on iOS and Android. Enable passwordless authentication with biometric security."
+description: "A comprehensive Flutter plugin for seamless Passkey (WebAuthn) integration on iOS, macOS, and Android. Enable passwordless authentication with biometric security."
 version: 0.0.6
 homepage: https://github.com/minhtri1401/flutter_passkey_service
 repository: https://github.com/minhtri1401/flutter_passkey_service
@@ -43,6 +43,8 @@ flutter:
         package: com.example.flutter_passkey_service
         pluginClass: FlutterPasskeyServicePlugin
       ios:
+        pluginClass: FlutterPasskeyServicePlugin
+      macos:
         pluginClass: FlutterPasskeyServicePlugin
 
   # To add assets to your plugin package, add an assets section, like this:

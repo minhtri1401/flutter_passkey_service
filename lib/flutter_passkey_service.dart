@@ -58,11 +58,15 @@ class FlutterPasskeyService {
     required String username,
     String displayName = '',
     bool enablePrf = false,
+    Map<String, String?>? prfEval,
     bool enableLargeBlob = false,
     int timeout = 60000,
     String attestation = 'none',
     List<RegisterGenerateOptionExcludeCredential> excludeCredentials = const [],
     String authenticatorAttachment = 'platform',
+    String residentKey = 'preferred',
+    bool requireResidentKey = false,
+    String userVerification = 'required',
   }) {
     return RegisterGenerateOptionData(
       challenge: challenge,
@@ -86,14 +90,14 @@ class FlutterPasskeyService {
       attestation: attestation,
       excludeCredentials: excludeCredentials,
       authenticatorSelection: RegisterGenerateOptionAuthenticatorSelection(
-        residentKey: 'preferred',
-        userVerification: 'required',
-        requireResidentKey: false,
+        residentKey: residentKey,
+        userVerification: userVerification,
+        requireResidentKey: requireResidentKey,
         authenticatorAttachment: authenticatorAttachment,
       ),
       extensions: RegisterGenerateOptionExtension(
         credProps: true,
-        prf: enablePrf ? PrfExtensionInput(eval: null) : null,
+        prf: enablePrf ? PrfExtensionInput(eval: prfEval) : null,
         largeBlob: enableLargeBlob
             ? LargeBlobExtensionRegistrationInput(support: 'preferred')
             : null,
@@ -112,6 +116,7 @@ class FlutterPasskeyService {
     Map<String, String?>? prfEval,
     bool? largeBlobRead,
     Uint8List? largeBlobWrite,
+    bool? preferImmediatelyAvailableCredentials,
   }) {
     // Convert allowedCredentialIds to allowCredentials if provided
     final credentials =
@@ -154,6 +159,7 @@ class FlutterPasskeyService {
               largeBlob: largeBlobInput,
             )
           : null,
+      preferImmediatelyAvailableCredentials: preferImmediatelyAvailableCredentials,
     );
   }
 
@@ -284,6 +290,7 @@ class FlutterPasskeyService {
                 largeBlob: _parseLargeBlobAuthInput(json['extensions']['largeBlob']),
               )
               : null,
+      preferImmediatelyAvailableCredentials: json['preferImmediatelyAvailableCredentials'] as bool?,
     );
   }
 
@@ -462,6 +469,8 @@ extension AuthGenerateOptionResponseDataExtension
             'write': base64Url.encode(extensions!.largeBlob!.write!),
         },
       },
+      if (preferImmediatelyAvailableCredentials != null)
+        'preferImmediatelyAvailableCredentials': preferImmediatelyAvailableCredentials,
     };
   }
 
