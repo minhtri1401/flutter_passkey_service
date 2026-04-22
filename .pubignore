@@ -9,6 +9,29 @@ example/.flutter-plugins
 example/.flutter-plugins-dependencies
 example/.packages
 example/build/
+example/.dart_tool/
+example/ios/Pods/
+example/ios/.symlinks/
+example/android/.gradle/
+example/android/build/
+example/android/app/build/
+example/android/local.properties
+example/pubspec.lock
+
+# Root-level Dart/Flutter build artifacts (since .pubignore overrides .gitignore)
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.fvm/
+
+# Internal development / planning artifacts — not part of the published package
+plans/
+specs/
+types_check/
+kek_feature_article.md
+large_blob_article.md
+CLAUDE.md
 
 # IDE files
 .vscode/

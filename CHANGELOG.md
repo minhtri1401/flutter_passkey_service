@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.7] - 2026-04-22
+
+### Added
+- **macOS platform support**: Full passkey registration and authentication on macOS 13.0+ via the native `AuthenticationServices` framework. Contributed by [@hhanh00](https://github.com/hhanh00) in [#2](https://github.com/minhtri1401/flutter_passkey_service/pull/2).
+- PRF extension support on macOS 15.0+ for deterministic symmetric key (KEK) derivation.
+- Large Blob extension support on macOS 14.0+ for on-authenticator blob storage.
+- `preferImmediatelyAvailableCredentials` flag exposed across all platforms for prompt behavior control.
+
+### Fixed
+- Corrected macOS podspec platform declaration from `:osx, '10.14'` to `:osx, '13.0'` so the pod manifest aligns with the `@available(macOS 13.0, *)` runtime gating in the plugin Swift sources. This prevents CocoaPods from attempting to build for unsupported macOS versions.
+- Replaced placeholder metadata (`http://example.com` homepage, generic author) in the macOS podspec with the repository homepage and plugin author.
+
 ## [0.0.6]
 
 ### Fixed
@@ -86,6 +98,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Lazy initialization to prevent startup crashes
 - Clean separation of concerns with utility classes
 
+[0.0.7]: https://github.com/minhtri1401/flutter_passkey_service/releases/tag/v0.0.7
+[0.0.6]: https://github.com/minhtri1401/flutter_passkey_service/releases/tag/v0.0.6
+[0.0.5]: https://github.com/minhtri1401/flutter_passkey_service/releases/tag/v0.0.5
 [0.0.4]: https://github.com/minhtri1401/flutter_passkey_service/releases/tag/v0.0.4
 [0.0.3]: https://github.com/minhtri1401/flutter_passkey_service/releases/tag/v0.0.3
 [0.0.2]: https://github.com/minhtri1401/flutter_passkey_service/releases/tag/v0.0.2

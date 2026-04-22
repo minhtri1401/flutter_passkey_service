@@ -4,18 +4,19 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'flutter_passkey_service'
-  s.version          = '0.0.1'
-  s.summary          = 'A new Flutter plugin project.'
+  s.version          = '0.0.7'
+  s.summary          = 'A comprehensive Flutter plugin for Passkey (WebAuthn) integration on macOS.'
   s.description      = <<-DESC
-A new Flutter plugin project.
+A comprehensive Flutter plugin for seamless Passkey (WebAuthn) integration on iOS, macOS, and Android.
+Enable passwordless authentication with biometric security.
                        DESC
-  s.homepage         = 'http://example.com'
+  s.homepage         = 'https://github.com/minhtri1401/flutter_passkey_service'
   s.license          = { :file => '../LICENSE' }
-  s.author           = { 'Your Company' => 'email@example.com' }
+  s.author           = { 'minhtri1401' => 'tri.dev.dhm@gmail.com' }
   s.source           = { :path => '.' }
   s.source_files = 'Classes/**/*'
   s.dependency 'FlutterMacOS'
-  s.platform = :osx, '10.14'
+  s.platform = :osx, '13.0'
 
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES' }
   s.swift_version = '5.0'

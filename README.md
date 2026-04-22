@@ -4,7 +4,7 @@
 [![Pub Points](https://img.shields.io/pub/points/flutter_passkey_service)](https://pub.dev/packages/flutter_passkey_service/score)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A robust, production-ready Flutter plugin for integrating **Passkeys** (WebAuthn/FIDO2) passwordless authentication on iOS and Android. Transform user authentication with biometric security and eliminate passwords.
+A robust, production-ready Flutter plugin for integrating **Passkeys** (WebAuthn/FIDO2) passwordless authentication on iOS, macOS, and Android. Transform user authentication with biometric security and eliminate passwords.
 
 ## 📖 Table of Contents
 
@@ -41,6 +41,7 @@ A robust, production-ready Flutter plugin for integrating **Passkeys** (WebAuthn
 | Platform | Minimum Version | Supported Features |
 |----------|-----------------|--------------------|
 | **iOS**     | 16.0+          | Touch ID, Face ID, Device Passcode, External Authenticators, Resident Keys |
+| **macOS**   | 13.0+          | Touch ID, Device Password, External Authenticators, Resident Keys (Large Blob on 14+, PRF on 15+) |
 | **Android** | API 28+ (9.0)  | Fingerprint, Face Unlock, Device PIN, External Authenticators, Resident Keys |
 
 ## 🚀 Installation
@@ -286,6 +287,17 @@ final customOptions = RegisterGenerateOptionData(
 - **Repository**: [GitHub](https://github.com/minhtri1401/flutter_passkey_service)
 - **Issue Tracker**: [Report a bug or request a feature](https://github.com/minhtri1401/flutter_passkey_service/issues)
 - Contributions are welcome! Read the `CONTRIBUTING.md` for guidelines.
+
+### 🌟 Contributors
+
+Thanks to these wonderful people who have contributed to the project:
+
+| Contributor | Contribution |
+|-------------|--------------|
+| [@minhtri1401](https://github.com/minhtri1401) | Project creator & maintainer — iOS & Android implementation, PRF and Large Blob extensions |
+| [@hhanh00](https://github.com/hhanh00) | macOS platform support ([#2](https://github.com/minhtri1401/flutter_passkey_service/pull/2)) |
+
+Want your name here? Check out [CONTRIBUTING.md](./CONTRIBUTING.md) and open a pull request!
 
 ## 📄 License
 
