@@ -7,10 +7,8 @@ import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetPublicKeyCredentialOption
 import androidx.credentials.PublicKeyCredential
-import android.util.Base64
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlinx.serialization.json.*
 
 /**
  * Service interface for handling Passkey authentication and registration operations.
@@ -152,13 +150,9 @@ interface PasskeyAuthService {
     ): Flow<CreatePasskeyResponseData>
 }
 
+
 class PasskeyAuthServiceImpl(private val credentialManager: CredentialManager) :
     PasskeyAuthService {
-    private val json: Json = Json {
-        isLenient = true
-        ignoreUnknownKeys = true
-        encodeDefaults = true
-    }
     private val exceptionHandler = PasskeyExceptionHandler()
 
     override fun register(
@@ -166,19 +160,10 @@ class PasskeyAuthServiceImpl(private val credentialManager: CredentialManager) :
         activityContext: Context
     ): Flow<CreatePasskeyResponseData> = flow {
         try {
-            // Convert Pigeon object to JSON manually since Pigeon doesn't use @Serializable
-            val requestJson = buildCreatePublicKeyCredentialRequest(option)
-            val createPublicKeyCredentialRequest = CreatePublicKeyCredentialRequest(requestJson)
-            val response =
-                credentialManager.createCredential(
-                    activityContext,
-                    createPublicKeyCredentialRequest
-                )
-            // Parse the JSON response manually since we can't use @Serializable with Pigeon
+            val request = CreatePublicKeyCredentialRequest(PasskeyJson.buildCreateRequestJson(option))
+            val response = credentialManager.createCredential(activityContext, request)
             val responseJson = (response as CreatePublicKeyCredentialResponse).registrationResponseJson
-            val jsonElement = Json.parseToJsonElement(responseJson).jsonObject
-            val responseData = buildCreatePasskeyResponseData(jsonElement, option.user.name)
-            emit(responseData)
+            emit(PasskeyJson.parseCreateResponse(responseJson, option.user.name))
         } catch (e: Exception) {
             throw exceptionHandler.handleRegistrationException(e)
         }
@@ -189,239 +174,17 @@ class PasskeyAuthServiceImpl(private val credentialManager: CredentialManager) :
         activityContext: Context
     ): Flow<GetPasskeyAuthenticationResponseData> = flow {
         try {
-            // Convert Pigeon object to JSON manually
-            val requestJson = buildGetPublicKeyCredentialOption(request)
-
             val getCredentialRequest = GetCredentialRequest.Builder()
-                .addCredentialOption(GetPublicKeyCredentialOption(requestJson))
+                .addCredentialOption(GetPublicKeyCredentialOption(PasskeyJson.buildGetRequestJson(request)))
                 .setPreferImmediatelyAvailableCredentials(
                     request.preferImmediatelyAvailableCredentials ?: false
                 )
                 .build()
             val response = credentialManager.getCredential(activityContext, getCredentialRequest)
             val cred = response.credential as PublicKeyCredential
-            // Parse the JSON response manually
-            val responseJson = cred.authenticationResponseJson
-            val jsonElement = Json.parseToJsonElement(responseJson).jsonObject
-
-            val responseData = buildGetPasskeyAuthenticationResponseData(jsonElement)
-            emit(responseData)
+            emit(PasskeyJson.parseGetResponse(cred.authenticationResponseJson))
         } catch (e: Exception) {
             throw exceptionHandler.handleAuthenticationException(e)
         }
-    }
-
-    private fun buildGetPasskeyAuthenticationResponseData(jsonElement: JsonObject): GetPasskeyAuthenticationResponseData {
-        return GetPasskeyAuthenticationResponseData(
-            authenticatorAttachment = jsonElement["authenticatorAttachment"]?.jsonPrimitive?.content,
-            id = jsonElement["id"]!!.jsonPrimitive.content,
-            rawId = jsonElement["rawId"]!!.jsonPrimitive.content,
-            response = parseGetPasskeyResponse(jsonElement["response"]!!.jsonObject),
-            type = jsonElement["type"]!!.jsonPrimitive.content,
-            clientExtensionResults = jsonElement["clientExtensionResults"]?.jsonObject?.let { parseAuthPasskeyExtensionResult(it) },
-            username = ""
-        )
-    }
-
-    private fun parseAuthPasskeyExtensionResult(json: JsonObject): AuthPasskeyExtensionResult {
-        return AuthPasskeyExtensionResult(
-            appid = json["appid"]?.jsonPrimitive?.boolean,
-            prf = json["prf"]?.jsonObject?.let { parseCreatePasskeyExtensionPrf(it) },
-            largeBlob = json["largeBlob"]?.jsonObject?.let { parseLargeBlobAuthOutput(it) }
-        )
-    }
-
-    private fun buildGetPublicKeyCredentialOption(request: AuthGenerateOptionResponseData): String {
-        return buildJsonObject {
-            put("challenge", request.challenge)
-            put("rpId", request.rpId)
-            if (request.allowCredentials.isNotEmpty()) {
-                putJsonArray("allowCredentials") {
-                    request.allowCredentials.forEach { cred ->
-                        addJsonObject {
-                            put("type", cred.type)
-                            put("id", cred.id)
-                            cred.transports?.let { t ->
-                                putJsonArray("transports") { t.forEach { add(it) } }
-                            }
-                        }
-                    }
-                }
-            }
-            request.timeout?.let { put("timeout", it) }
-            request.userVerification?.let { put("userVerification", it) }
-            val hasPrf = request.extensions?.prf != null
-            val hasLargeBlob = request.extensions?.largeBlob != null
-            if (hasPrf || hasLargeBlob) {
-                putJsonObject("extensions") {
-                    if (hasPrf) {
-                        putJsonObject("prf") {
-                            val prfEval = request.extensions?.prf?.eval
-                            if (prfEval != null) {
-                                putJsonObject("eval") {
-                                    prfEval.forEach { (key, value) ->
-                                        if (key != null && value != null) put(key, value)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if (hasLargeBlob) {
-                        putJsonObject("largeBlob") {
-                            val lb = request.extensions!!.largeBlob!!
-                            if (lb.read == true) {
-                                put("read", true)
-                            } else if (lb.write != null) {
-                                val encoded = Base64.encodeToString(
-                                    lb.write,
-                                    Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING
-                                )
-                                put("write", encoded)
-                            }
-                        }
-                    }
-                }
-            }
-        }.toString()
-    }
-
-    private fun buildCreatePasskeyResponseData(jsonElement: JsonObject, username: String): CreatePasskeyResponseData {
-        return CreatePasskeyResponseData(
-            rawId = jsonElement["rawId"]!!.jsonPrimitive.content,
-            authenticatorAttachment = jsonElement["authenticatorAttachment"]?.jsonPrimitive?.content,
-            type = jsonElement["type"]!!.jsonPrimitive.content,
-            id = jsonElement["id"]!!.jsonPrimitive.content,
-            response = parseCreatePasskeyResponse(jsonElement["response"]!!.jsonObject),
-            clientExtensionResults = parseCreatePasskeyExtension(jsonElement["clientExtensionResults"]!!.jsonObject),
-            username = username
-        )
-    }
-
-    private fun buildCreatePublicKeyCredentialRequest(option: RegisterGenerateOptionData): String {
-        return buildJsonObject {
-            put("challenge", option.challenge)
-            putJsonObject("rp") {
-                put("name", option.rp.name)
-                put("id", option.rp.id)
-            }
-            putJsonObject("user") {
-                put("id", option.user.id)
-                put("name", option.user.name)
-                put("displayName", option.user.displayName)
-            }
-            putJsonArray("pubKeyCredParams") {
-                option.pubKeyCredParams.forEach { param ->
-                    addJsonObject {
-                        put("type", param.type)
-                        put("alg", param.alg)
-                    }
-                }
-            }
-            option.timeout?.let { put("timeout", it) }
-            put("attestation", option.attestation)
-            putJsonArray("excludeCredentials") {
-                option.excludeCredentials.forEach { cred ->
-                    addJsonObject {
-                        put("type", cred.type)
-                        put("id", cred.id)
-                        cred.transports?.let { t ->
-                            putJsonArray("transports") { t.forEach { add(it) } }
-                        }
-                    }
-                }
-            }
-            option.authenticatorSelection?.let { sel ->
-                putJsonObject("authenticatorSelection") {
-                    sel.residentKey?.let { put("residentKey", it) }
-                    sel.userVerification?.let { put("userVerification", it) }
-                    sel.requireResidentKey?.let { put("requireResidentKey", it) }
-                    sel.authenticatorAttachment?.let { put("authenticatorAttachment", it) }
-                }
-            }
-            putJsonObject("extensions") {
-                put("credProps", option.extensions.credProps)
-                if (option.extensions.prf != null) {
-                    putJsonObject("prf") {
-                        val prfEval = option.extensions.prf?.eval
-                        if (prfEval != null) {
-                            putJsonObject("eval") {
-                                prfEval.forEach { (key, value) ->
-                                    if (key != null && value != null) put(key, value)
-                                }
-                            }
-                        }
-                    }
-                }
-                if (option.extensions.largeBlob != null) {
-                    putJsonObject("largeBlob") {
-                        put("support", option.extensions.largeBlob?.support ?: "preferred")
-                    }
-                }
-            }
-        }.toString()
-    }
-    private fun parseCreatePasskeyResponse(json: JsonObject): CreatePasskeyResponse {
-        return CreatePasskeyResponse(
-            clientDataJSON = json["clientDataJSON"]!!.jsonPrimitive.content,
-            attestationObject = json["attestationObject"]!!.jsonPrimitive.content,
-            transports = json["transports"]!!.jsonArray.map { it.jsonPrimitive.content },
-            authenticatorData = json["authenticatorData"]!!.jsonPrimitive.content,
-            publicKeyAlgorithm = json["publicKeyAlgorithm"]!!.jsonPrimitive.long,
-            publicKey = json["publicKey"]!!.jsonPrimitive.content
-        )
-    }
-
-    private fun parseCreatePasskeyExtension(json: JsonObject): CreatePasskeyExtension {
-        return CreatePasskeyExtension(
-            credProps = json["credProps"]?.jsonObject?.let { parseCreatePasskeyExtensionProps(it) },
-            prf = json["prf"]?.jsonObject?.let { parseCreatePasskeyExtensionPrf(it) },
-            largeBlob = json["largeBlob"]?.jsonObject?.let { parseLargeBlobRegistrationOutput(it) }
-        )
-    }
-
-    private fun parseCreatePasskeyExtensionProps(json: JsonObject): CreatePasskeyExtensionProps {
-        return CreatePasskeyExtensionProps(
-            rk = json["rk"]!!.jsonPrimitive.boolean
-        )
-    }
-
-    private fun parseCreatePasskeyExtensionPrf(json: JsonObject): PrfExtensionOutput {
-        val resultsMap = mutableMapOf<String?, String?>()
-        json["results"]?.jsonObject?.forEach { (key, value) ->
-            resultsMap[key] = value.jsonPrimitive.content
-        }
-        return PrfExtensionOutput(
-            enabled = json["enabled"]?.jsonPrimitive?.boolean,
-            results = if (resultsMap.isNotEmpty()) resultsMap else null
-        )
-    }
-
-    private fun parseLargeBlobRegistrationOutput(json: JsonObject): LargeBlobExtensionRegistrationOutput {
-        return LargeBlobExtensionRegistrationOutput(
-            supported = json["supported"]?.jsonPrimitive?.boolean
-        )
-    }
-
-    private fun parseLargeBlobAuthOutput(json: JsonObject): LargeBlobExtensionAuthOutput {
-        val blobData = try {
-            json["blob"]?.jsonPrimitive?.content?.let { base64Str ->
-                Base64.decode(base64Str, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
-            }
-        } catch (e: IllegalArgumentException) {
-            null
-        }
-        return LargeBlobExtensionAuthOutput(
-            blob = blobData,
-            written = json["written"]?.jsonPrimitive?.boolean
-        )
-    }
-
-    private fun parseGetPasskeyResponse(json: JsonObject): GetPasskeyAuthenticationResponse {
-        return GetPasskeyAuthenticationResponse(
-            clientDataJSON = json["clientDataJSON"]!!.jsonPrimitive.content,
-            authenticatorData = json["authenticatorData"]!!.jsonPrimitive.content,
-            signature = json["signature"]!!.jsonPrimitive.content,
-            userHandle = json["userHandle"]!!.jsonPrimitive.content
-        )
     }
 }

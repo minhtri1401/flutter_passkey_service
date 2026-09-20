@@ -53,6 +53,8 @@ class PasskeyExceptionHandler {
      */
     fun handleRegistrationException(exception: Exception): PasskeyOperationException {
         return when (exception) {
+            is PasskeyOperationException -> exception
+
             is IllegalArgumentException -> PasskeyOperationException(
                 errorType = PasskeyErrorType.INVALID_PARAMETERS,
                 message = "Invalid input parameters provided for passkey registration",
@@ -122,6 +124,8 @@ class PasskeyExceptionHandler {
      */
     fun handleAuthenticationException(exception: Exception): PasskeyOperationException {
         return when (exception) {
+            is PasskeyOperationException -> exception
+
             is IllegalArgumentException -> PasskeyOperationException(
                 errorType = PasskeyErrorType.INVALID_PARAMETERS,
                 message = "Invalid authentication parameters provided",
