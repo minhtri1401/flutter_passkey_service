@@ -75,7 +75,8 @@ func convertASAuthorizationError(_ error: ASAuthorizationError, preferImmediatel
         )
 
     case .failed:
-        if errorChainContains(nsError, "associated domain") {
+        // Apple's message reads "... is not associated with domain ..."; the second needle catches other phrasings.
+        if errorChainContains(nsError, "not associated with domain") || errorChainContains(nsError, "associated domain") {
             return PasskeyException(
                 errorType: .domainNotAssociated,
                 message: "Domain not associated with app",
