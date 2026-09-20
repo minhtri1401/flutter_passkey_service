@@ -11,6 +11,7 @@ A robust, production-ready Flutter plugin for integrating **Passkeys** (WebAuthn
 - [Features](#-features)
 - [Platform Support](#-platform-support)
 - [Installation](#-installation)
+- [Migration to 0.1.0](#migration-to-010)
 - [Domain Verification Setup](#-domain-verification-setup)
   - [iOS Setup](#ios-setup)
   - [Android Setup](#android-setup)
@@ -38,11 +39,13 @@ A robust, production-ready Flutter plugin for integrating **Passkeys** (WebAuthn
 
 ## 📋 Platform Support
 
-| Platform | Minimum Version | Supported Features |
-|----------|-----------------|--------------------|
-| **iOS**     | 16.0+          | Touch ID, Face ID, Device Passcode, External Authenticators, Resident Keys |
-| **macOS**   | 13.0+          | Touch ID, Device Password, External Authenticators, Resident Keys (Large Blob on 14+, PRF on 15+) |
-| **Android** | API 28+ (9.0)  | Fingerprint, Face Unlock, Device PIN, External Authenticators, Resident Keys |
+| Platform | Minimum Version | Notes |
+|----------|-----------------|-------|
+| **iOS**     | 16.0+          | Platform passkeys (iCloud Keychain). `excludeCredentials` 17.4+, Large Blob 17.0+, PRF 18.0+. `pubKeyCredParams`, `timeout`, `hints`, `attestationFormats`, `residentKey` have no platform API and are ignored. |
+| **macOS**   | 13.0+          | Same as iOS. `excludeCredentials` 13.5+, Large Blob 14.0+, PRF 15.0+. |
+| **Android** | API 28+ (9.0)  | Credential Manager (`androidx.credentials` 1.6.0). All WebAuthn JSON fields are forwarded to the provider. Library minSdk is 23; passkeys require Google Play services on Android 9+. |
+
+Both Swift Package Manager and CocoaPods are supported on iOS and macOS via the shared `darwin/` package.
 
 ## 🚀 Installation
 
@@ -57,6 +60,12 @@ Run:
 ```bash
 flutter pub get
 ```
+
+## Migration to 0.1.0
+
+1. **iOS/macOS user handle.** Passkeys registered on iOS/macOS with 0.0.x carry a user handle equal to the UTF-8 bytes of the `userId` string you passed. Their assertions still return the same `userHandle` as before. New registrations use the base64url-decoded bytes, matching Android. If your server compares `userHandle` to its stored `user.id`, accept both forms during the transition or re-register iOS users. If you passed a non-base64url string (for example `user-123`), encode it first; iOS/macOS now reject strings that are not valid base64url with `invalidFormat`.
+2. **JSON defaults.** If you relied on the plugin adding `userVerification: required` or `authenticatorAttachment: platform` to server JSON, send them from the server.
+3. **CocoaPods apps:** run `pod install` in `ios/` and `macos/` after upgrading.
 
 ---
 
@@ -112,7 +121,7 @@ Future<void> registerPasskey() async {
       challenge: 'base64url-encoded-challenge-from-server',
       rpName: 'Your App Name',
       rpId: 'yourdomain.com', // Must match verified domain
-      userId: 'user-unique-id',
+      userId: 'dXNlci11bmlxdWUtaWQ', // base64url of your user handle bytes
       username: 'user@example.com',
       displayName: 'John Doe',
     );

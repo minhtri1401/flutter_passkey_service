@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0] - 2026-09-20
+
+### Changed
+- **Shared Darwin package.** `ios/` and `macos/` are replaced by one `darwin/` Swift package with a `Package.swift` (Swift Package Manager) and a single podspec (CocoaPods). Apps on Flutter 3.24+ with SPM enabled build the plugin as a Swift package; other apps keep using CocoaPods.
+- **iOS/macOS user handle now follows the WebAuthn JSON format.** `user.id` is base64url-decoded before being handed to the authenticator, matching Android. See Migration.
+- **`createRegistrationOptionsFromJson` / `createAuthenticationOptionsFromJson` no longer inject defaults.** Fields the server omits (`timeout`, `userVerification`, `authenticatorSelection` and its members, credential `transports`) stay null and are left to the platform. `createRegistrationOptions` / `createAuthenticationOptions` keep their explicit defaults.
+- Pigeon models: `timeout`, `userVerification`, `authenticatorSelection` (and its four fields) and credential `transports` are nullable.
+- Android: `androidx.credentials` 1.6.0 (stable); `play-services-auth` dependency removed.
+
+### Added
+- iOS/macOS apply `displayName`, `userVerification` and `attestation` from the options.
+- iOS 18+ / macOS 15+ evaluate PRF salts at registration when `extensions.prf.eval` is set, returning `clientExtensionResults.prf.results` like Android.
+- Android forwards `hints`, `attestationFormats` and the `appid` extension.
+- Kotlin unit tests for request JSON, response parsing and exception mapping.
+
+### Fixed
+- iOS 18+ / macOS 15+ excluded-credential matches now map to `excludeCredentialsMatch` instead of `unknownError`.
+- "No credentials" and "domain not associated" detection no longer depends only on the English error text.
+- Android no longer crashes when a credential provider omits optional response fields (`transports`, `authenticatorData`, `publicKey`, `publicKeyAlgorithm`, `userHandle`); a missing required field yields `invalidResponse`.
+- iOS/macOS report `transports: ["internal", "hybrid"]` and `null` (not `""`) for fields AuthenticationServices does not expose.
+- A second `register`/`authenticate` call while one is pending fails fast with `operationNotSupported` instead of hanging the first call forever.
+- Stale macOS `Messages.swift` eliminated (single generated file).
+
+### Migration
+1. **iOS/macOS user handle.** Passkeys registered on iOS/macOS with 0.0.x carry a user handle equal to the UTF-8 bytes of the `userId` string you passed. Their assertions still return the same `userHandle` as before. New registrations use the base64url-decoded bytes, matching Android. If your server compares `userHandle` to its stored `user.id`, accept both forms during the transition or re-register iOS users. If you passed a non-base64url string (for example `user-123`), encode it first; iOS/macOS now reject strings that are not valid base64url with `invalidFormat`.
+2. **JSON defaults.** If you relied on the plugin adding `userVerification: required` or `authenticatorAttachment: platform` to server JSON, send them from the server.
+3. **CocoaPods apps:** run `pod install` in `ios/` and `macos/` after upgrading.
+
 ## [0.0.7] - 2026-04-22
 
 ### Added

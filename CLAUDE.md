@@ -16,8 +16,8 @@ fvm flutter test                       # Run all Dart unit tests
 fvm flutter test test/flutter_passkey_service_test.dart  # Run single test file
 fvm flutter analyze                    # Lint (uses flutter_lints via analysis_options.yaml)
 fvm dart format lib test               # Format code
-fvm dart run pigeon --input lib/pigeons/messages.dart  # Regenerate platform channel code
-cp ios/Classes/Messages.swift macos/Classes/Messages.swift  # Copy generated Swift messages to macOS (Pigeon only outputs one swiftOut)
+fvm dart run pigeon --input lib/pigeons/messages.dart  # Regenerate platform channel code (Dart, Kotlin, Swift)
+cd example/android && ./gradlew :flutter_passkey_service:testDebugUnitTest  # Kotlin unit tests
 ```
 
 Example app: `cd example && fvm flutter run`
@@ -27,7 +27,7 @@ Example app: `cd example && fvm flutter run`
 **Pigeon-based platform channels** — a single source file (`lib/pigeons/messages.dart`) defines all data models and the `PasskeyHostApi` interface. Running Pigeon generates:
 - `lib/pigeons/messages.g.dart` (Dart)
 - `android/.../Messages.kt` (Kotlin)
-- `ios/Classes/Messages.swift` (Swift — must be manually copied to `macos/Classes/Messages.swift` after regeneration)
+- `darwin/flutter_passkey_service/Sources/flutter_passkey_service/Messages.swift` (Swift, shared by iOS and macOS)
 
 Never edit generated files directly. Edit `messages.dart` and regenerate.
 
@@ -35,9 +35,7 @@ Never edit generated files directly. Edit `messages.dart` and regenerate.
 
 **Android** (`android/src/main/kotlin/.../`): Uses `androidx.credentials.CredentialManager` with Kotlin coroutines. Flow: `FlutterPasskeyServicePlugin` → `PasskeyHostApiImpl` → `PasskeyAuthServiceImpl`. Exception translation in `PasskeyExceptionHandler`.
 
-**iOS** (`ios/Classes/`): Uses `AuthenticationServices` framework. Flow: `FlutterPasskeyServicePlugin` → `PasskeyHostApiImpl` → `PasskeyAuthServiceImpl` → `RegisterController`/`AuthenticateController` (handle ASAuthorization delegates). PRF via `ASAuthorizationPublicKeyCredentialPRFRegistrationInput` (iOS 18+).
-
-**macOS** (`macos/Classes/`): Mirrors iOS implementation using the same `AuthenticationServices` framework. Key differences: uses `NSApplication` for window lookup, `@available(macOS 13.0, *)` for base passkey support. macOS version mapping: iOS 16→macOS 13, iOS 17→macOS 14, iOS 18→macOS 15.
+**Darwin (iOS + macOS)** (`darwin/flutter_passkey_service/Sources/flutter_passkey_service/`): one Swift package used by both platforms (`sharedDarwinSource: true`), built via Swift Package Manager (`Package.swift`) or CocoaPods (`darwin/flutter_passkey_service.podspec`). Uses `AuthenticationServices`. Flow: `FlutterPasskeyServicePlugin` → `PasskeyHostApiImpl` → `PasskeyAuthServiceImpl` → `RegisterController`/`AuthenticateController`. Error mapping in `PasskeyErrorMapping.swift`. Platform differences are limited to `#if os(iOS)`/`os(macOS)` blocks (Flutter vs FlutterMacOS import, messenger accessor, key-window lookup). Availability floors: base iOS 16/macOS 13; `excludedCredentials` iOS 17.4/macOS 13.5; largeBlob iOS 17/macOS 14; PRF iOS 18/macOS 15.
 
 **Error handling**: All platform exceptions map to `PasskeyException` with typed `PasskeyErrorType` enum (~20 cases), providing unified error handling across platforms.
 
@@ -47,6 +45,7 @@ Never edit generated files directly. Edit `messages.dart` and regenerate.
 - JSON interchange format matches WebAuthn server expectations — manual JSON parsing in native code for flexibility
 - Platform services use protocol/interface pattern for testability (`PasskeyAuthService` protocol/interface)
 - Android requires Activity context — plugin implements `ActivityAware`
+- Android JSON building/parsing lives in `PasskeyJson` (pure JVM, unit-tested); `PasskeyAuthServiceImpl` only talks to CredentialManager
 
 ## Domain Verification
 
@@ -58,6 +57,19 @@ Passkeys require associated domain verification:
 
 - **Dart**: `plugin_platform_interface`, `flutter` SDK
 - **Dev**: `pigeon` (^26.0.1) for code generation, `flutter_lints`
-- **Android**: `androidx.credentials:credentials:1.6.0-alpha05`, `play-services-auth`, `kotlinx-serialization-json`
-- **iOS**: Native `AuthenticationServices` framework (no CocoaPods deps)
-- **macOS**: Same `AuthenticationServices` framework. Shares `Messages.swift` from iOS (manually copied). Podspec at `macos/flutter_passkey_service.podspec`.
+- **Android**: `androidx.credentials:credentials:1.6.0`, `credentials-play-services-auth:1.6.0`, `kotlinx-serialization-json`
+- **Darwin**: Native `AuthenticationServices` framework, no third-party dependencies
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in GitHub Issues for minhtri1401/flutter_passkey_service via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` and `docs/adr/` at the repo root, created lazily by `/domain-modeling`. See `docs/agents/domain.md`.
