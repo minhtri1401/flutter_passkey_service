@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0] - 2026-09-20
 
+### ⚠️ Breaking
+- **Dart API:** `RegisterGenerateOptionData.timeout`, `.authenticatorSelection` (and its four fields), `AuthGenerateOptionResponseData.timeout`, `.userVerification`, and credential-descriptor `transports` are now nullable. Code that reads them without a null check, or that relied on `createRegistrationOptionsFromJson` / `createAuthenticationOptionsFromJson` injecting defaults, must be updated.
+- **iOS/macOS user handle:** `user.id` is now base64url-decoded before registration (matching Android). Servers comparing `userHandle` to a raw string will see a different value for newly registered iOS/macOS passkeys. See Migration.
+- **Native layout:** `ios/` and `macos/` are replaced by `darwin/`. CocoaPods users must re-run `pod install`; Flutter 3.24+ with SPM needs no action.
+
 ### Changed
 - **Shared Darwin package.** `ios/` and `macos/` are replaced by one `darwin/` Swift package with a `Package.swift` (Swift Package Manager) and a single podspec (CocoaPods). Apps on Flutter 3.24+ with SPM enabled build the plugin as a Swift package; other apps keep using CocoaPods.
 - **iOS/macOS user handle now follows the WebAuthn JSON format.** `user.id` is base64url-decoded before being handed to the authenticator, matching Android. See Migration.
