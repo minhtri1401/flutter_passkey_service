@@ -47,7 +47,7 @@ class PasskeyHostApiImpl: NSObject, PasskeyHostApi {
             message: "Unable to initialize passkey service",
             details: "No key window found for presentation on \(platform)"
         )
-        return PigeonError(code: "PASSKEY_ERROR", message: error.message, details: error)
+        return pigeonError(error)
     }
 
     func register(options: RegisterGenerateOptionData, completion: @escaping (Result<CreatePasskeyResponseData, Error>) -> Void) {

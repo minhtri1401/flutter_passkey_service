@@ -99,14 +99,11 @@ class AuthenticateController: NSObject, ASAuthorizationControllerDelegate, ASAut
     }
 
     func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
-        if let err = error as? ASAuthorizationError {
-            let passkeyError = convertASAuthorizationError(err)
-            completion?(.failure(pigeonError(passkeyError)))
-        } else {
-            let nsError = error as NSError
-            let passkeyError = convertNSError(nsError)
-            completion?(.failure(pigeonError(passkeyError)))
-        }
+        let passkeyError = convertAuthorizationError(
+            error,
+            preferImmediatelyAvailableCredentials: preferImmediatelyAvailableCredentials
+        )
+        completion?(.failure(pigeonError(passkeyError)))
     }
 
     func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {

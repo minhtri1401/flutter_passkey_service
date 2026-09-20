@@ -208,8 +208,3 @@ class PasskeyAuthServiceImpl: PasskeyAuthService {
     }
 }
 
-/// Wraps a PasskeyException in the PigeonError shape Dart unwraps into PasskeyException.
-func pigeonError(_ exception: PasskeyException) -> PigeonError {
-    PigeonError(code: "PASSKEY_ERROR", message: exception.message, details: exception)
-}
-

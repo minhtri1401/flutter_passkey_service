@@ -82,14 +82,8 @@ class RegisterController: NSObject, ASAuthorizationControllerDelegate, ASAuthori
     }
 
     func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
-        if let err = error as? ASAuthorizationError {
-            let passkeyError = convertASAuthorizationError(err)
-            completion?(.failure(pigeonError(passkeyError)))
-        } else {
-            let nsError = error as NSError
-            let passkeyError = convertNSError(nsError)
-            completion?(.failure(pigeonError(passkeyError)))
-        }
+        let passkeyError = convertAuthorizationError(error, preferImmediatelyAvailableCredentials: false)
+        completion?(.failure(pigeonError(passkeyError)))
     }
 
     func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
@@ -98,109 +92,4 @@ class RegisterController: NSObject, ASAuthorizationControllerDelegate, ASAuthori
         #endif
         return self.window
     }
-}
-
-// MARK: - Error Conversion Functions
-@available(iOS 13.0, macOS 10.15, *)
-func convertASAuthorizationError(_ error: ASAuthorizationError) -> PasskeyException {
-    switch error.code {
-    case .unknown:
-        return PasskeyException(
-            errorType: .unknownError,
-            message: error.localizedDescription,
-            details: "Unknown authorization error"
-        )
-    case .canceled:
-        if error.localizedDescription.contains("No credentials available for login.") {
-            return PasskeyException(
-                errorType: .noCredentialsAvailable,
-                message: "No credentials available for login",
-                details: error.localizedDescription
-            )
-        } else {
-            return PasskeyException(
-                errorType: .userCancelled,
-                message: "User cancelled the operation",
-                details: error.localizedDescription
-            )
-        }
-    case .invalidResponse:
-        return PasskeyException(
-            errorType: .invalidResponse,
-            message: "Invalid response received",
-            details: error.localizedDescription
-        )
-    case .notHandled:
-        return PasskeyException(
-            errorType: .notHandled,
-            message: "Request not handled",
-            details: error.localizedDescription
-        )
-    case .failed:
-        if error.localizedDescription.contains("is not associated with domain") {
-            return PasskeyException(
-                errorType: .domainNotAssociated,
-                message: "Domain not associated with app",
-                details: error.localizedDescription
-            )
-        } else {
-            return PasskeyException(
-                errorType: .failed,
-                message: "Operation failed",
-                details: error.localizedDescription
-            )
-        }
-    default:
-        return PasskeyException(
-            errorType: .unknownError,
-            message: error.localizedDescription,
-            details: "Unhandled authorization error code"
-        )
-    }
-}
-
-func convertNSError(_ error: NSError) -> PasskeyException {
-    if error.domain == "WKErrorDomain" && error.code == 8 {
-        return PasskeyException(
-            errorType: .excludeCredentialsMatch,
-            message: "Excluded credentials match",
-            details: error.localizedDescription
-        )
-    } else {
-        return PasskeyException(
-            errorType: .wkErrorDomain,
-            message: error.localizedDescription,
-            details: "iOS unhandled error: \(error.domain)"
-        )
-    }
-}
-
-func convertCustomError(_ error: CustomErrors) -> PasskeyException {
-    switch error {
-    case .decodingChallenge:
-        return PasskeyException(
-            errorType: .decodingChallenge,
-            message: "Failed to decode challenge",
-            details: "Challenge data could not be decoded"
-        )
-    case .unexpectedAuthorizationResponse:
-        return PasskeyException(
-            errorType: .unexpectedAuthorizationResponse,
-            message: "Unexpected authorization response",
-            details: "Received unexpected response type"
-        )
-    case .unknown:
-        return PasskeyException(
-            errorType: .unknownError,
-            message: "Unknown custom error",
-            details: "An unknown custom error occurred"
-        )
-    }
-}
-
-// MARK: - Custom Errors Enum
-public enum CustomErrors: Error {
-    case decodingChallenge
-    case unexpectedAuthorizationResponse
-    case unknown
 }
