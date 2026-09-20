@@ -213,17 +213,16 @@ class FlutterPasskeyService {
               type: 'public-key',
             ), // RS256
           ],
-      timeout: json['timeout'] as int? ?? 60000,
+      timeout: json['timeout'] as int?,
       attestation: json['attestation'] as String? ?? 'none',
       excludeCredentials:
           (json['excludeCredentials'] as List<dynamic>?)
               ?.map(
                 (cred) => RegisterGenerateOptionExcludeCredential(
                   id: cred['id'] as String,
-                  type: cred['type'] as String,
+                  type: cred['type'] as String? ?? 'public-key',
                   transports:
-                      (cred['transports'] as List<dynamic>?)?.cast<String>() ??
-                      ['internal'],
+                      (cred['transports'] as List<dynamic>?)?.cast<String>(),
                 ),
               )
               .toList() ??
@@ -271,16 +270,15 @@ class FlutterPasskeyService {
               ?.map(
                 (cred) => AuthGenerateOptionAllowCredential(
                   id: cred['id'] as String,
-                  type: cred['type'] as String,
+                  type: cred['type'] as String? ?? 'public-key',
                   transports:
-                      (cred['transports'] as List<dynamic>?)?.cast<String>() ??
-                      ['internal', 'hybrid'],
+                      (cred['transports'] as List<dynamic>?)?.cast<String>(),
                 ),
               )
               .toList() ??
           [],
-      timeout: json['timeout'] as int? ?? 60000,
-      userVerification: json['userVerification'] as String? ?? 'required',
+      timeout: json['timeout'] as int?,
+      userVerification: json['userVerification'] as String?,
       hints: (json['hints'] as List<dynamic>?)?.cast<String>(),
       extensions:
           json['extensions'] != null
@@ -313,24 +311,16 @@ class FlutterPasskeyService {
     return createAuthenticationOptionsFromJson(json);
   }
 
-  /// Helper method to parse authenticator selection from JSON
-  static RegisterGenerateOptionAuthenticatorSelection
+  /// Returns null when the server sent no authenticatorSelection; otherwise passes
+  /// through exactly the fields present (no injected defaults).
+  static RegisterGenerateOptionAuthenticatorSelection?
   _parseAuthenticatorSelection(Map<String, dynamic>? json) {
-    if (json == null) {
-      return RegisterGenerateOptionAuthenticatorSelection(
-        residentKey: 'preferred',
-        userVerification: 'required',
-        requireResidentKey: false,
-        authenticatorAttachment: 'platform',
-      );
-    }
-
+    if (json == null) return null;
     return RegisterGenerateOptionAuthenticatorSelection(
-      residentKey: json['residentKey'] as String? ?? 'preferred',
-      userVerification: json['userVerification'] as String? ?? 'required',
-      requireResidentKey: json['requireResidentKey'] as bool? ?? false,
-      authenticatorAttachment:
-          json['authenticatorAttachment'] as String? ?? 'platform',
+      residentKey: json['residentKey'] as String?,
+      userVerification: json['userVerification'] as String?,
+      requireResidentKey: json['requireResidentKey'] as bool?,
+      authenticatorAttachment: json['authenticatorAttachment'] as String?,
     );
   }
 
@@ -395,24 +385,29 @@ extension RegisterGenerateOptionDataExtension on RegisterGenerateOptionData {
       'pubKeyCredParams': pubKeyCredParams
           .map((param) => {'alg': param.alg, 'type': param.type})
           .toList(),
-      'timeout': timeout,
+      if (timeout != null) 'timeout': timeout,
       'attestation': attestation,
       'excludeCredentials': excludeCredentials
           .map(
             (cred) => {
               'id': cred.id,
               'type': cred.type,
-              'transports': cred.transports,
+              if (cred.transports != null) 'transports': cred.transports,
             },
           )
           .toList(),
-      'authenticatorSelection': {
-        'residentKey': authenticatorSelection.residentKey,
-        'userVerification': authenticatorSelection.userVerification,
-        'requireResidentKey': authenticatorSelection.requireResidentKey,
-        'authenticatorAttachment':
-            authenticatorSelection.authenticatorAttachment,
-      },
+      if (authenticatorSelection != null)
+        'authenticatorSelection': {
+          if (authenticatorSelection!.residentKey != null)
+            'residentKey': authenticatorSelection!.residentKey,
+          if (authenticatorSelection!.userVerification != null)
+            'userVerification': authenticatorSelection!.userVerification,
+          if (authenticatorSelection!.requireResidentKey != null)
+            'requireResidentKey': authenticatorSelection!.requireResidentKey,
+          if (authenticatorSelection!.authenticatorAttachment != null)
+            'authenticatorAttachment':
+                authenticatorSelection!.authenticatorAttachment,
+        },
       'extensions': {
         'credProps': extensions.credProps,
         if (extensions.prf != null && extensions.prf!.eval != null)
@@ -449,12 +444,12 @@ extension AuthGenerateOptionResponseDataExtension
             (cred) => {
               'id': cred.id,
               'type': cred.type,
-              'transports': cred.transports,
+              if (cred.transports != null) 'transports': cred.transports,
             },
           )
           .toList(),
-      'timeout': timeout,
-      'userVerification': userVerification,
+      if (timeout != null) 'timeout': timeout,
+      if (userVerification != null) 'userVerification': userVerification,
       if (hints != null) 'hints': hints,
       if (extensions != null) 'extensions': {
         if (extensions!.appid != null) 'appid': extensions!.appid,

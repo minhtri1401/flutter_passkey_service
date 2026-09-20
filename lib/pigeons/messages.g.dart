@@ -144,8 +144,8 @@ class AuthGenerateOptionResponseData {
     required this.rpId,
     required this.challenge,
     required this.allowCredentials,
-    required this.timeout,
-    required this.userVerification,
+    this.timeout,
+    this.userVerification,
     this.hints,
     this.extensions,
     this.preferImmediatelyAvailableCredentials,
@@ -160,11 +160,11 @@ class AuthGenerateOptionResponseData {
   /// List of allowed credentials
   List<AuthGenerateOptionAllowCredential> allowCredentials;
 
-  /// Timeout value in milliseconds
-  int timeout;
+  /// Timeout value in milliseconds (null = platform default)
+  int? timeout;
 
-  /// User verification requirement
-  String userVerification;
+  /// User verification requirement: "required", "preferred", "discouraged" (null = platform default)
+  String? userVerification;
 
   /// Hints for the authenticator
   List<String?>? hints;
@@ -197,8 +197,8 @@ class AuthGenerateOptionResponseData {
       rpId: result[0]! as String,
       challenge: result[1]! as String,
       allowCredentials: (result[2]! as List<Object?>).cast<AuthGenerateOptionAllowCredential>(),
-      timeout: result[3]! as int,
-      userVerification: result[4]! as String,
+      timeout: result[3] as int?,
+      userVerification: result[4] as String?,
       hints: (result[5] as List<Object?>?)?.cast<String?>(),
       extensions: result[6] as AuthGenerateOptionExtension?,
       preferImmediatelyAvailableCredentials: result[7] as bool?,
@@ -283,7 +283,7 @@ class AuthGenerateOptionAllowCredential {
   AuthGenerateOptionAllowCredential({
     required this.id,
     required this.type,
-    required this.transports,
+    this.transports,
   });
 
   /// The credential identifier
@@ -292,8 +292,8 @@ class AuthGenerateOptionAllowCredential {
   /// The credential type
   String type;
 
-  /// List of transport methods
-  List<String> transports;
+  /// List of transport methods (null = unspecified)
+  List<String>? transports;
 
   List<Object?> _toList() {
     return <Object?>[
@@ -311,7 +311,7 @@ class AuthGenerateOptionAllowCredential {
     return AuthGenerateOptionAllowCredential(
       id: result[0]! as String,
       type: result[1]! as String,
-      transports: (result[2]! as List<Object?>).cast<String>(),
+      transports: (result[2] as List<Object?>?)?.cast<String>(),
     );
   }
 
@@ -907,10 +907,10 @@ class RegisterGenerateOptionData {
     required this.rp,
     required this.user,
     required this.pubKeyCredParams,
-    required this.timeout,
+    this.timeout,
     required this.attestation,
     required this.excludeCredentials,
-    required this.authenticatorSelection,
+    this.authenticatorSelection,
     required this.extensions,
     this.hints,
     this.attestationFormats,
@@ -928,8 +928,8 @@ class RegisterGenerateOptionData {
   /// Public key credential parameters
   List<RegisterGenerateOptionPublicKeyParams> pubKeyCredParams;
 
-  /// Timeout value in milliseconds
-  int timeout;
+  /// Timeout value in milliseconds (null = platform default)
+  int? timeout;
 
   /// Attestation preference
   String attestation;
@@ -937,8 +937,8 @@ class RegisterGenerateOptionData {
   /// Credentials to exclude from registration
   List<RegisterGenerateOptionExcludeCredential> excludeCredentials;
 
-  /// Authenticator selection criteria
-  RegisterGenerateOptionAuthenticatorSelection authenticatorSelection;
+  /// Authenticator selection criteria (null = platform defaults)
+  RegisterGenerateOptionAuthenticatorSelection? authenticatorSelection;
 
   /// Extensions for registration
   RegisterGenerateOptionExtension extensions;
@@ -975,10 +975,10 @@ class RegisterGenerateOptionData {
       rp: result[1]! as RegisterGenerateOptionRp,
       user: result[2]! as RegisterGenerateOptionUser,
       pubKeyCredParams: (result[3]! as List<Object?>).cast<RegisterGenerateOptionPublicKeyParams>(),
-      timeout: result[4]! as int,
+      timeout: result[4] as int?,
       attestation: result[5]! as String,
       excludeCredentials: (result[6]! as List<Object?>).cast<RegisterGenerateOptionExcludeCredential>(),
-      authenticatorSelection: result[7]! as RegisterGenerateOptionAuthenticatorSelection,
+      authenticatorSelection: result[7] as RegisterGenerateOptionAuthenticatorSelection?,
       extensions: result[8]! as RegisterGenerateOptionExtension,
       hints: (result[9] as List<Object?>?)?.cast<String?>(),
       attestationFormats: (result[10] as List<Object?>?)?.cast<String?>(),
@@ -1008,7 +1008,7 @@ class RegisterGenerateOptionExcludeCredential {
   RegisterGenerateOptionExcludeCredential({
     required this.id,
     required this.type,
-    required this.transports,
+    this.transports,
   });
 
   /// Credential identifier
@@ -1017,8 +1017,8 @@ class RegisterGenerateOptionExcludeCredential {
   /// Credential type
   String type;
 
-  /// List of transport methods
-  List<String> transports;
+  /// List of transport methods (null = unspecified)
+  List<String>? transports;
 
   List<Object?> _toList() {
     return <Object?>[
@@ -1036,7 +1036,7 @@ class RegisterGenerateOptionExcludeCredential {
     return RegisterGenerateOptionExcludeCredential(
       id: result[0]! as String,
       type: result[1]! as String,
-      transports: (result[2]! as List<Object?>).cast<String>(),
+      transports: (result[2] as List<Object?>?)?.cast<String>(),
     );
   }
 
@@ -1214,23 +1214,23 @@ class RegisterGenerateOptionPublicKeyParams {
 /// Represents authenticator selection criteria
 class RegisterGenerateOptionAuthenticatorSelection {
   RegisterGenerateOptionAuthenticatorSelection({
-    required this.residentKey,
-    required this.userVerification,
-    required this.requireResidentKey,
-    this.authenticatorAttachment = 'platform',
+    this.residentKey,
+    this.userVerification,
+    this.requireResidentKey,
+    this.authenticatorAttachment,
   });
 
-  /// Resident key requirement
-  String residentKey;
+  /// Resident key requirement: "required", "preferred", "discouraged"
+  String? residentKey;
 
-  /// User verification requirement
-  String userVerification;
+  /// User verification requirement: "required", "preferred", "discouraged"
+  String? userVerification;
 
-  /// Whether resident key is required
-  bool requireResidentKey;
+  /// Whether resident key is required (WebAuthn L1 compatibility)
+  bool? requireResidentKey;
 
-  /// Authenticator attachment preference
-  String authenticatorAttachment;
+  /// Authenticator attachment preference: "platform" or "cross-platform"
+  String? authenticatorAttachment;
 
   List<Object?> _toList() {
     return <Object?>[
@@ -1247,10 +1247,10 @@ class RegisterGenerateOptionAuthenticatorSelection {
   static RegisterGenerateOptionAuthenticatorSelection decode(Object result) {
     result as List<Object?>;
     return RegisterGenerateOptionAuthenticatorSelection(
-      residentKey: result[0]! as String,
-      userVerification: result[1]! as String,
-      requireResidentKey: result[2]! as bool,
-      authenticatorAttachment: result[3]! as String,
+      residentKey: result[0] as String?,
+      userVerification: result[1] as String?,
+      requireResidentKey: result[2] as bool?,
+      authenticatorAttachment: result[3] as String?,
     );
   }
 

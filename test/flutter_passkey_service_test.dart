@@ -46,8 +46,8 @@ void main() {
       expect(options.pubKeyCredParams.length, 2);
       expect(options.pubKeyCredParams.first.alg, -7);
       expect(options.excludeCredentials, isEmpty);
-      expect(options.authenticatorSelection.authenticatorAttachment, 'platform');
-      expect(options.authenticatorSelection.residentKey, 'preferred');
+      expect(options.authenticatorSelection!.authenticatorAttachment, 'platform');
+      expect(options.authenticatorSelection!.residentKey, 'preferred');
       expect(options.extensions.credProps, true);
       expect(options.hints, isNull);
     });
@@ -171,8 +171,8 @@ void main() {
       expect(options.extensions.credProps, false);
       expect(options.excludeCredentials.length, 1);
       expect(options.excludeCredentials.first.transports, ["usb"]);
-      expect(options.authenticatorSelection.residentKey, "required");
-      expect(options.authenticatorSelection.authenticatorAttachment, "cross-platform");
+      expect(options.authenticatorSelection!.residentKey, "required");
+      expect(options.authenticatorSelection!.authenticatorAttachment, "cross-platform");
 
       // Verify toJson serialization respects all fields
       final toJsonResult = options.toJson();
@@ -182,7 +182,7 @@ void main() {
       expect(toJsonResult['authenticatorSelection']['residentKey'], 'required');
     });
 
-    test('createRegistrationOptionsFromJson handles missing optional fields with defaults', () {
+    test('createRegistrationOptionsFromJson leaves absent optional fields null', () {
       final minimalJson = {
         "challenge": "base64url-challenge",
         "rp": {"name": "My App", "id": "example.com"},
@@ -192,18 +192,45 @@ void main() {
       final options = FlutterPasskeyService.createRegistrationOptionsFromJson(minimalJson);
 
       expect(options.user.displayName, '');
-      expect(options.timeout, 60000); // Default wrapper timeout
-      expect(options.attestation, 'none'); // Default
+      expect(options.timeout, isNull);
+      expect(options.attestation, 'none'); // spec default
       expect(options.hints, isNull);
       expect(options.attestationFormats, isNull);
       expect(options.excludeCredentials, isEmpty);
-      expect(options.pubKeyCredParams.length, 2); // Default algorithms fallbacks
-      expect(options.extensions.credProps, true); // Default
-      expect(options.authenticatorSelection.authenticatorAttachment, 'platform'); // Default config
-      
+      expect(options.pubKeyCredParams.length, 2); // ES256 + RS256 fallback
+      expect(options.extensions.credProps, true);
+      expect(options.authenticatorSelection, isNull);
+
       final toJsonResult = options.toJson();
+      expect(toJsonResult.containsKey('timeout'), false);
+      expect(toJsonResult.containsKey('authenticatorSelection'), false);
       expect(toJsonResult.containsKey('hints'), false);
       expect(toJsonResult.containsKey('attestationFormats'), false);
+    });
+
+    test('createRegistrationOptionsFromJson passes partial authenticatorSelection through', () {
+      final json = {
+        "challenge": "c",
+        "rp": {"name": "My App", "id": "example.com"},
+        "user": {"id": "dXNlcjEyMw", "name": "user@example.com"},
+        "authenticatorSelection": {"userVerification": "discouraged"},
+        "excludeCredentials": [
+          {"id": "cred-1", "type": "public-key"}
+        ]
+      };
+
+      final options = FlutterPasskeyService.createRegistrationOptionsFromJson(json);
+
+      expect(options.authenticatorSelection, isNotNull);
+      expect(options.authenticatorSelection!.userVerification, 'discouraged');
+      expect(options.authenticatorSelection!.authenticatorAttachment, isNull);
+      expect(options.authenticatorSelection!.residentKey, isNull);
+      expect(options.authenticatorSelection!.requireResidentKey, isNull);
+      expect(options.excludeCredentials.single.transports, isNull);
+
+      final toJsonResult = options.toJson();
+      expect(toJsonResult['authenticatorSelection'], {'userVerification': 'discouraged'});
+      expect((toJsonResult['excludeCredentials'] as List).single, {'id': 'cred-1', 'type': 'public-key'});
     });
 
     test('createAuthenticationOptionsFromJson parses all fields including hints and extensions', () {
@@ -235,23 +262,44 @@ void main() {
       expect(toJsonResult['extensions']['appid'], true);
     });
 
-    test('createAuthenticationOptionsFromJson handles missing optional fields with defaults', () {
+    test('createAuthenticationOptionsFromJson leaves absent optional fields null', () {
       final minimalJson = {
         "challenge": "auth-challenge",
-        "rpId": "example.com"
+        "rpId": "example.com",
+        "allowCredentials": [
+          {"id": "cred-1", "type": "public-key"}
+        ]
       };
 
       final options = FlutterPasskeyService.createAuthenticationOptionsFromJson(minimalJson);
 
-      expect(options.timeout, 60000);
-      expect(options.userVerification, 'required');
-      expect(options.allowCredentials, isEmpty);
+      expect(options.timeout, isNull);
+      expect(options.userVerification, isNull);
+      expect(options.allowCredentials.single.transports, isNull);
       expect(options.hints, isNull);
       expect(options.extensions, isNull);
 
       final toJsonResult = options.toJson();
+      expect(toJsonResult.containsKey('timeout'), false);
+      expect(toJsonResult.containsKey('userVerification'), false);
       expect(toJsonResult.containsKey('hints'), false);
       expect(toJsonResult.containsKey('extensions'), false);
+      expect((toJsonResult['allowCredentials'] as List).single, {'id': 'cred-1', 'type': 'public-key'});
+    });
+
+    test('convenience helpers keep their explicit defaults', () {
+      final reg = FlutterPasskeyService.createRegistrationOptions(
+        challenge: 'c', rpName: 'App', rpId: 'app.com', userId: 'dXNlcjEyMw', username: 'u',
+      );
+      expect(reg.timeout, 60000);
+      expect(reg.authenticatorSelection!.userVerification, 'required');
+      expect(reg.authenticatorSelection!.authenticatorAttachment, 'platform');
+      expect(reg.authenticatorSelection!.residentKey, 'preferred');
+      expect(reg.authenticatorSelection!.requireResidentKey, false);
+
+      final auth = FlutterPasskeyService.createAuthenticationOptions(challenge: 'c', rpId: 'app.com');
+      expect(auth.timeout, 60000);
+      expect(auth.userVerification, 'required');
     });
 
     test('createRegistrationOptionsFromJsonString parses accurately', () {

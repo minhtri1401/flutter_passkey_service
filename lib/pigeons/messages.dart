@@ -87,8 +87,8 @@ class AuthGenerateOptionResponseData {
     required this.rpId,
     required this.challenge,
     required this.allowCredentials,
-    required this.timeout,
-    required this.userVerification,
+    this.timeout,
+    this.userVerification,
     this.hints,
     this.extensions,
     this.preferImmediatelyAvailableCredentials,
@@ -103,11 +103,11 @@ class AuthGenerateOptionResponseData {
   /// List of allowed credentials
   List<AuthGenerateOptionAllowCredential> allowCredentials;
 
-  /// Timeout value in milliseconds
-  int timeout;
+  /// Timeout value in milliseconds (null = platform default)
+  int? timeout;
 
-  /// User verification requirement
-  String userVerification;
+  /// User verification requirement: "required", "preferred", "discouraged" (null = platform default)
+  String? userVerification;
 
   /// Hints for the authenticator
   List<String?>? hints;
@@ -138,7 +138,7 @@ class AuthGenerateOptionAllowCredential {
   AuthGenerateOptionAllowCredential({
     required this.id,
     required this.type,
-    required this.transports,
+    this.transports,
   });
 
   /// The credential identifier
@@ -147,8 +147,8 @@ class AuthGenerateOptionAllowCredential {
   /// The credential type
   String type;
 
-  /// List of transport methods
-  List<String> transports;
+  /// List of transport methods (null = unspecified)
+  List<String>? transports;
 }
 
 /// Represents the response data for authentication verification
@@ -353,10 +353,10 @@ class RegisterGenerateOptionData {
     required this.rp,
     required this.user,
     required this.pubKeyCredParams,
-    required this.timeout,
+    this.timeout,
     required this.attestation,
     required this.excludeCredentials,
-    required this.authenticatorSelection,
+    this.authenticatorSelection,
     required this.extensions,
     this.hints,
     this.attestationFormats,
@@ -374,8 +374,8 @@ class RegisterGenerateOptionData {
   /// Public key credential parameters
   List<RegisterGenerateOptionPublicKeyParams> pubKeyCredParams;
 
-  /// Timeout value in milliseconds
-  int timeout;
+  /// Timeout value in milliseconds (null = platform default)
+  int? timeout;
 
   /// Attestation preference
   String attestation;
@@ -383,8 +383,8 @@ class RegisterGenerateOptionData {
   /// Credentials to exclude from registration
   List<RegisterGenerateOptionExcludeCredential> excludeCredentials;
 
-  /// Authenticator selection criteria
-  RegisterGenerateOptionAuthenticatorSelection authenticatorSelection;
+  /// Authenticator selection criteria (null = platform defaults)
+  RegisterGenerateOptionAuthenticatorSelection? authenticatorSelection;
 
   /// Extensions for registration
   RegisterGenerateOptionExtension extensions;
@@ -401,7 +401,7 @@ class RegisterGenerateOptionExcludeCredential {
   RegisterGenerateOptionExcludeCredential({
     required this.id,
     required this.type,
-    required this.transports,
+    this.transports,
   });
 
   /// Credential identifier
@@ -410,8 +410,8 @@ class RegisterGenerateOptionExcludeCredential {
   /// Credential type
   String type;
 
-  /// List of transport methods
-  List<String> transports;
+  /// List of transport methods (null = unspecified)
+  List<String>? transports;
 }
 
 /// Represents relying party information for registration
@@ -460,23 +460,23 @@ class RegisterGenerateOptionPublicKeyParams {
 /// Represents authenticator selection criteria
 class RegisterGenerateOptionAuthenticatorSelection {
   RegisterGenerateOptionAuthenticatorSelection({
-    required this.residentKey,
-    required this.userVerification,
-    required this.requireResidentKey,
-    this.authenticatorAttachment = 'platform',
+    this.residentKey,
+    this.userVerification,
+    this.requireResidentKey,
+    this.authenticatorAttachment,
   });
 
-  /// Resident key requirement
-  String residentKey;
+  /// Resident key requirement: "required", "preferred", "discouraged"
+  String? residentKey;
 
-  /// User verification requirement
-  String userVerification;
+  /// User verification requirement: "required", "preferred", "discouraged"
+  String? userVerification;
 
-  /// Whether resident key is required
-  bool requireResidentKey;
+  /// Whether resident key is required (WebAuthn L1 compatibility)
+  bool? requireResidentKey;
 
-  /// Authenticator attachment preference
-  String authenticatorAttachment;
+  /// Authenticator attachment preference: "platform" or "cross-platform"
+  String? authenticatorAttachment;
 }
 
 /// Represents extensions for registration

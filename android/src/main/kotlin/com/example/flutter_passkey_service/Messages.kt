@@ -171,10 +171,10 @@ data class AuthGenerateOptionResponseData (
   val challenge: String,
   /** List of allowed credentials */
   val allowCredentials: List<AuthGenerateOptionAllowCredential>,
-  /** Timeout value in milliseconds */
-  val timeout: Long,
-  /** User verification requirement */
-  val userVerification: String,
+  /** Timeout value in milliseconds (null = platform default) */
+  val timeout: Long? = null,
+  /** User verification requirement: "required", "preferred", "discouraged" (null = platform default) */
+  val userVerification: String? = null,
   /** Hints for the authenticator */
   val hints: List<String?>? = null,
   /** Extensions for authentication */
@@ -188,8 +188,8 @@ data class AuthGenerateOptionResponseData (
       val rpId = pigeonVar_list[0] as String
       val challenge = pigeonVar_list[1] as String
       val allowCredentials = pigeonVar_list[2] as List<AuthGenerateOptionAllowCredential>
-      val timeout = pigeonVar_list[3] as Long
-      val userVerification = pigeonVar_list[4] as String
+      val timeout = pigeonVar_list[3] as Long?
+      val userVerification = pigeonVar_list[4] as String?
       val hints = pigeonVar_list[5] as List<String?>?
       val extensions = pigeonVar_list[6] as AuthGenerateOptionExtension?
       val preferImmediatelyAvailableCredentials = pigeonVar_list[7] as Boolean?
@@ -271,15 +271,15 @@ data class AuthGenerateOptionAllowCredential (
   val id: String,
   /** The credential type */
   val type: String,
-  /** List of transport methods */
-  val transports: List<String>
+  /** List of transport methods (null = unspecified) */
+  val transports: List<String>? = null
 )
  {
   companion object {
     fun fromList(pigeonVar_list: List<Any?>): AuthGenerateOptionAllowCredential {
       val id = pigeonVar_list[0] as String
       val type = pigeonVar_list[1] as String
-      val transports = pigeonVar_list[2] as List<String>
+      val transports = pigeonVar_list[2] as List<String>?
       return AuthGenerateOptionAllowCredential(id, type, transports)
     }
   }
@@ -733,14 +733,14 @@ data class RegisterGenerateOptionData (
   val user: RegisterGenerateOptionUser,
   /** Public key credential parameters */
   val pubKeyCredParams: List<RegisterGenerateOptionPublicKeyParams>,
-  /** Timeout value in milliseconds */
-  val timeout: Long,
+  /** Timeout value in milliseconds (null = platform default) */
+  val timeout: Long? = null,
   /** Attestation preference */
   val attestation: String,
   /** Credentials to exclude from registration */
   val excludeCredentials: List<RegisterGenerateOptionExcludeCredential>,
-  /** Authenticator selection criteria */
-  val authenticatorSelection: RegisterGenerateOptionAuthenticatorSelection,
+  /** Authenticator selection criteria (null = platform defaults) */
+  val authenticatorSelection: RegisterGenerateOptionAuthenticatorSelection? = null,
   /** Extensions for registration */
   val extensions: RegisterGenerateOptionExtension,
   /** Hints for the authenticator */
@@ -755,10 +755,10 @@ data class RegisterGenerateOptionData (
       val rp = pigeonVar_list[1] as RegisterGenerateOptionRp
       val user = pigeonVar_list[2] as RegisterGenerateOptionUser
       val pubKeyCredParams = pigeonVar_list[3] as List<RegisterGenerateOptionPublicKeyParams>
-      val timeout = pigeonVar_list[4] as Long
+      val timeout = pigeonVar_list[4] as Long?
       val attestation = pigeonVar_list[5] as String
       val excludeCredentials = pigeonVar_list[6] as List<RegisterGenerateOptionExcludeCredential>
-      val authenticatorSelection = pigeonVar_list[7] as RegisterGenerateOptionAuthenticatorSelection
+      val authenticatorSelection = pigeonVar_list[7] as RegisterGenerateOptionAuthenticatorSelection?
       val extensions = pigeonVar_list[8] as RegisterGenerateOptionExtension
       val hints = pigeonVar_list[9] as List<String?>?
       val attestationFormats = pigeonVar_list[10] as List<String?>?
@@ -802,15 +802,15 @@ data class RegisterGenerateOptionExcludeCredential (
   val id: String,
   /** Credential type */
   val type: String,
-  /** List of transport methods */
-  val transports: List<String>
+  /** List of transport methods (null = unspecified) */
+  val transports: List<String>? = null
 )
  {
   companion object {
     fun fromList(pigeonVar_list: List<Any?>): RegisterGenerateOptionExcludeCredential {
       val id = pigeonVar_list[0] as String
       val type = pigeonVar_list[1] as String
-      val transports = pigeonVar_list[2] as List<String>
+      val transports = pigeonVar_list[2] as List<String>?
       return RegisterGenerateOptionExcludeCredential(id, type, transports)
     }
   }
@@ -954,22 +954,22 @@ data class RegisterGenerateOptionPublicKeyParams (
  * Generated class from Pigeon that represents data sent in messages.
  */
 data class RegisterGenerateOptionAuthenticatorSelection (
-  /** Resident key requirement */
-  val residentKey: String,
-  /** User verification requirement */
-  val userVerification: String,
-  /** Whether resident key is required */
-  val requireResidentKey: Boolean,
-  /** Authenticator attachment preference */
-  val authenticatorAttachment: String
+  /** Resident key requirement: "required", "preferred", "discouraged" */
+  val residentKey: String? = null,
+  /** User verification requirement: "required", "preferred", "discouraged" */
+  val userVerification: String? = null,
+  /** Whether resident key is required (WebAuthn L1 compatibility) */
+  val requireResidentKey: Boolean? = null,
+  /** Authenticator attachment preference: "platform" or "cross-platform" */
+  val authenticatorAttachment: String? = null
 )
  {
   companion object {
     fun fromList(pigeonVar_list: List<Any?>): RegisterGenerateOptionAuthenticatorSelection {
-      val residentKey = pigeonVar_list[0] as String
-      val userVerification = pigeonVar_list[1] as String
-      val requireResidentKey = pigeonVar_list[2] as Boolean
-      val authenticatorAttachment = pigeonVar_list[3] as String
+      val residentKey = pigeonVar_list[0] as String?
+      val userVerification = pigeonVar_list[1] as String?
+      val requireResidentKey = pigeonVar_list[2] as Boolean?
+      val authenticatorAttachment = pigeonVar_list[3] as String?
       return RegisterGenerateOptionAuthenticatorSelection(residentKey, userVerification, requireResidentKey, authenticatorAttachment)
     }
   }

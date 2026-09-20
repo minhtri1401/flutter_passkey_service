@@ -210,10 +210,10 @@ struct AuthGenerateOptionResponseData: Hashable {
   var challenge: String
   /// List of allowed credentials
   var allowCredentials: [AuthGenerateOptionAllowCredential]
-  /// Timeout value in milliseconds
-  var timeout: Int64
-  /// User verification requirement
-  var userVerification: String
+  /// Timeout value in milliseconds (null = platform default)
+  var timeout: Int64? = nil
+  /// User verification requirement: "required", "preferred", "discouraged" (null = platform default)
+  var userVerification: String? = nil
   /// Hints for the authenticator
   var hints: [String?]? = nil
   /// Extensions for authentication
@@ -227,8 +227,8 @@ struct AuthGenerateOptionResponseData: Hashable {
     let rpId = pigeonVar_list[0] as! String
     let challenge = pigeonVar_list[1] as! String
     let allowCredentials = pigeonVar_list[2] as! [AuthGenerateOptionAllowCredential]
-    let timeout = pigeonVar_list[3] as! Int64
-    let userVerification = pigeonVar_list[4] as! String
+    let timeout: Int64? = nilOrValue(pigeonVar_list[3])
+    let userVerification: String? = nilOrValue(pigeonVar_list[4])
     let hints: [String?]? = nilOrValue(pigeonVar_list[5])
     let extensions: AuthGenerateOptionExtension? = nilOrValue(pigeonVar_list[6])
     let preferImmediatelyAvailableCredentials: Bool? = nilOrValue(pigeonVar_list[7])
@@ -309,15 +309,15 @@ struct AuthGenerateOptionAllowCredential: Hashable {
   var id: String
   /// The credential type
   var type: String
-  /// List of transport methods
-  var transports: [String]
+  /// List of transport methods (null = unspecified)
+  var transports: [String]? = nil
 
 
   // swift-format-ignore: AlwaysUseLowerCamelCase
   static func fromList(_ pigeonVar_list: [Any?]) -> AuthGenerateOptionAllowCredential? {
     let id = pigeonVar_list[0] as! String
     let type = pigeonVar_list[1] as! String
-    let transports = pigeonVar_list[2] as! [String]
+    let transports: [String]? = nilOrValue(pigeonVar_list[2])
 
     return AuthGenerateOptionAllowCredential(
       id: id,
@@ -753,14 +753,14 @@ struct RegisterGenerateOptionData: Hashable {
   var user: RegisterGenerateOptionUser
   /// Public key credential parameters
   var pubKeyCredParams: [RegisterGenerateOptionPublicKeyParams]
-  /// Timeout value in milliseconds
-  var timeout: Int64
+  /// Timeout value in milliseconds (null = platform default)
+  var timeout: Int64? = nil
   /// Attestation preference
   var attestation: String
   /// Credentials to exclude from registration
   var excludeCredentials: [RegisterGenerateOptionExcludeCredential]
-  /// Authenticator selection criteria
-  var authenticatorSelection: RegisterGenerateOptionAuthenticatorSelection
+  /// Authenticator selection criteria (null = platform defaults)
+  var authenticatorSelection: RegisterGenerateOptionAuthenticatorSelection? = nil
   /// Extensions for registration
   var extensions: RegisterGenerateOptionExtension
   /// Hints for the authenticator
@@ -775,10 +775,10 @@ struct RegisterGenerateOptionData: Hashable {
     let rp = pigeonVar_list[1] as! RegisterGenerateOptionRp
     let user = pigeonVar_list[2] as! RegisterGenerateOptionUser
     let pubKeyCredParams = pigeonVar_list[3] as! [RegisterGenerateOptionPublicKeyParams]
-    let timeout = pigeonVar_list[4] as! Int64
+    let timeout: Int64? = nilOrValue(pigeonVar_list[4])
     let attestation = pigeonVar_list[5] as! String
     let excludeCredentials = pigeonVar_list[6] as! [RegisterGenerateOptionExcludeCredential]
-    let authenticatorSelection = pigeonVar_list[7] as! RegisterGenerateOptionAuthenticatorSelection
+    let authenticatorSelection: RegisterGenerateOptionAuthenticatorSelection? = nilOrValue(pigeonVar_list[7])
     let extensions = pigeonVar_list[8] as! RegisterGenerateOptionExtension
     let hints: [String?]? = nilOrValue(pigeonVar_list[9])
     let attestationFormats: [String?]? = nilOrValue(pigeonVar_list[10])
@@ -827,15 +827,15 @@ struct RegisterGenerateOptionExcludeCredential: Hashable {
   var id: String
   /// Credential type
   var type: String
-  /// List of transport methods
-  var transports: [String]
+  /// List of transport methods (null = unspecified)
+  var transports: [String]? = nil
 
 
   // swift-format-ignore: AlwaysUseLowerCamelCase
   static func fromList(_ pigeonVar_list: [Any?]) -> RegisterGenerateOptionExcludeCredential? {
     let id = pigeonVar_list[0] as! String
     let type = pigeonVar_list[1] as! String
-    let transports = pigeonVar_list[2] as! [String]
+    let transports: [String]? = nilOrValue(pigeonVar_list[2])
 
     return RegisterGenerateOptionExcludeCredential(
       id: id,
@@ -965,22 +965,22 @@ struct RegisterGenerateOptionPublicKeyParams: Hashable {
 ///
 /// Generated class from Pigeon that represents data sent in messages.
 struct RegisterGenerateOptionAuthenticatorSelection: Hashable {
-  /// Resident key requirement
-  var residentKey: String
-  /// User verification requirement
-  var userVerification: String
-  /// Whether resident key is required
-  var requireResidentKey: Bool
-  /// Authenticator attachment preference
-  var authenticatorAttachment: String
+  /// Resident key requirement: "required", "preferred", "discouraged"
+  var residentKey: String? = nil
+  /// User verification requirement: "required", "preferred", "discouraged"
+  var userVerification: String? = nil
+  /// Whether resident key is required (WebAuthn L1 compatibility)
+  var requireResidentKey: Bool? = nil
+  /// Authenticator attachment preference: "platform" or "cross-platform"
+  var authenticatorAttachment: String? = nil
 
 
   // swift-format-ignore: AlwaysUseLowerCamelCase
   static func fromList(_ pigeonVar_list: [Any?]) -> RegisterGenerateOptionAuthenticatorSelection? {
-    let residentKey = pigeonVar_list[0] as! String
-    let userVerification = pigeonVar_list[1] as! String
-    let requireResidentKey = pigeonVar_list[2] as! Bool
-    let authenticatorAttachment = pigeonVar_list[3] as! String
+    let residentKey: String? = nilOrValue(pigeonVar_list[0])
+    let userVerification: String? = nilOrValue(pigeonVar_list[1])
+    let requireResidentKey: Bool? = nilOrValue(pigeonVar_list[2])
+    let authenticatorAttachment: String? = nilOrValue(pigeonVar_list[3])
 
     return RegisterGenerateOptionAuthenticatorSelection(
       residentKey: residentKey,

@@ -241,15 +241,15 @@ class PasskeyAuthServiceImpl(private val credentialManager: CredentialManager) :
                         addJsonObject {
                             put("type", cred.type)
                             put("id", cred.id)
-                            putJsonArray("transports") {
-                                cred.transports.forEach { add(it) }
+                            cred.transports?.let { t ->
+                                putJsonArray("transports") { t.forEach { add(it) } }
                             }
                         }
                     }
                 }
             }
-            put("timeout", request.timeout)
-            put("userVerification", request.userVerification)
+            request.timeout?.let { put("timeout", it) }
+            request.userVerification?.let { put("userVerification", it) }
             val hasPrf = request.extensions?.prf != null
             val hasLargeBlob = request.extensions?.largeBlob != null
             if (hasPrf || hasLargeBlob) {
@@ -317,24 +317,26 @@ class PasskeyAuthServiceImpl(private val credentialManager: CredentialManager) :
                     }
                 }
             }
-            put("timeout", option.timeout)
+            option.timeout?.let { put("timeout", it) }
             put("attestation", option.attestation)
             putJsonArray("excludeCredentials") {
                 option.excludeCredentials.forEach { cred ->
                     addJsonObject {
                         put("type", cred.type)
                         put("id", cred.id)
-                        putJsonArray("transports") {
-                            cred.transports.forEach { add(it) }
+                        cred.transports?.let { t ->
+                            putJsonArray("transports") { t.forEach { add(it) } }
                         }
                     }
                 }
             }
-            putJsonObject("authenticatorSelection") {
-                put("residentKey", option.authenticatorSelection.residentKey)
-                put("userVerification", option.authenticatorSelection.userVerification)
-                put("requireResidentKey", option.authenticatorSelection.requireResidentKey)
-                put("authenticatorAttachment", option.authenticatorSelection.authenticatorAttachment)
+            option.authenticatorSelection?.let { sel ->
+                putJsonObject("authenticatorSelection") {
+                    sel.residentKey?.let { put("residentKey", it) }
+                    sel.userVerification?.let { put("userVerification", it) }
+                    sel.requireResidentKey?.let { put("requireResidentKey", it) }
+                    sel.authenticatorAttachment?.let { put("authenticatorAttachment", it) }
+                }
             }
             putJsonObject("extensions") {
                 put("credProps", option.extensions.credProps)
