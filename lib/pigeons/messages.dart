@@ -9,7 +9,8 @@ import 'package:pigeon/pigeon.dart';
     kotlinOptions: KotlinOptions(
       package: 'com.example.flutter_passkey_service',
     ),
-    swiftOut: 'ios/Classes/Messages.swift',
+    swiftOut:
+        'darwin/flutter_passkey_service/Sources/flutter_passkey_service/Messages.swift',
     dartPackageName: 'flutter_passkey_service',
   ),
 )

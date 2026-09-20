@@ -1,9 +1,13 @@
 import AuthenticationServices
 import LocalAuthentication
 import Foundation
+#if os(iOS)
 import Flutter
+#elseif os(macOS)
+import FlutterMacOS
+#endif
 
-@available(iOS 16.0, *)
+@available(iOS 16.0, macOS 13.0, *)
 class AuthenticateController: NSObject, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
     public var completion: ((Result<GetPasskeyAuthenticationResponseData, Error>) -> Void)?
     private let window: ASPresentationAnchor
@@ -37,7 +41,7 @@ class AuthenticateController: NSObject, ASAuthorizationControllerDelegate, ASAut
         switch authorization.credential {
         case let r as ASAuthorizationPublicKeyCredentialAssertion:
             var prfOutput: PrfExtensionOutput? = nil
-            if #available(iOS 18.0, *) {
+            if #available(iOS 18.0, macOS 15.0, *) {
                 if let platformAssertion = r as? ASAuthorizationPlatformPublicKeyCredentialAssertion, let prfResult = platformAssertion.prf {
                     prfOutput = PrfExtensionOutput(enabled: nil, results: [:])
                     prfOutput?.results?["first"] = prfResult.first.withUnsafeBytes { Data($0) }.toBase64URL()
@@ -48,7 +52,7 @@ class AuthenticateController: NSObject, ASAuthorizationControllerDelegate, ASAut
             }
 
             var largeBlobOutput: LargeBlobExtensionAuthOutput? = nil
-            if #available(iOS 17.0, *) {
+            if #available(iOS 17.0, macOS 14.0, *) {
                 if let platformAssertion = r as? ASAuthorizationPlatformPublicKeyCredentialAssertion,
                    let largeBlobResult = platformAssertion.largeBlob {
                     switch largeBlobResult.result {

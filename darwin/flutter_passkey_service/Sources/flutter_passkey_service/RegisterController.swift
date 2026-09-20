@@ -2,38 +2,38 @@ import AuthenticationServices
 import LocalAuthentication
 import Foundation
 
-@available(macOS 13.0, *)
+@available(iOS 16.0, macOS 13.0, *)
 class RegisterController: NSObject, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
     public var completion: ((Result<CreatePasskeyResponseData, Error>) -> Void)?
     private let window: ASPresentationAnchor
     private let username: String
     private var authorizationController: ASAuthorizationController? = nil
-
+    
     init(window: ASPresentationAnchor, username: String, completion: @escaping ((Result<CreatePasskeyResponseData, Error>) -> Void)) {
         self.completion = completion
         self.window = window
         self.username = username
     }
-
+    
     func run(request: ASAuthorizationPlatformPublicKeyCredentialRegistrationRequest) {
         authorizationController = ASAuthorizationController(authorizationRequests: [request])
         authorizationController?.delegate = self
         authorizationController?.presentationContextProvider = self
         authorizationController?.performRequests()
     }
-
+    
     func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
         switch authorization.credential {
         case let r as ASAuthorizationPublicKeyCredentialRegistration:
             var prfOutput: PrfExtensionOutput? = nil
-            if #available(macOS 15.0, *) {
+            if #available(iOS 18.0, macOS 15.0, *) {
                 if let platformReg = r as? ASAuthorizationPlatformPublicKeyCredentialRegistration, let prfResult = platformReg.prf {
                     prfOutput = PrfExtensionOutput(enabled: prfResult.isSupported, results: nil)
                 }
             }
 
             var largeBlobOutput: LargeBlobExtensionRegistrationOutput? = nil
-            if #available(macOS 14.0, *) {
+            if #available(iOS 17.0, macOS 14.0, *) {
                 if let platformReg = r as? ASAuthorizationPlatformPublicKeyCredentialRegistration,
                    let largeBlobResult = platformReg.largeBlob {
                     largeBlobOutput = LargeBlobExtensionRegistrationOutput(
@@ -51,9 +51,9 @@ class RegisterController: NSObject, ASAuthorizationControllerDelegate, ASAuthori
                     clientDataJSON: r.rawClientDataJSON.toBase64URL(),
                     attestationObject: r.rawAttestationObject?.toBase64URL() ?? "",
                     transports: ["internal"],
-                    authenticatorData: "", // macOS doesn't provide this separately
+                    authenticatorData: "", // iOS doesn't provide this separately
                     publicKeyAlgorithm: -7, // ES256
-                    publicKey: "" // macOS doesn't provide this separately
+                    publicKey: "" // iOS doesn't provide this separately
                 ),
                 clientExtensionResults: CreatePasskeyExtension(
                     credProps: nil,
@@ -87,13 +87,15 @@ class RegisterController: NSObject, ASAuthorizationControllerDelegate, ASAuthori
     }
 
     func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+        #if os(macOS)
         self.window.makeKeyAndOrderFront(nil)
+        #endif
         return self.window
     }
 }
 
 // MARK: - Error Conversion Functions
-@available(macOS 13.0, *)
+@available(iOS 13.0, macOS 10.15, *)
 func convertASAuthorizationError(_ error: ASAuthorizationError) -> PasskeyException {
     switch error.code {
     case .unknown:
@@ -162,7 +164,7 @@ func convertNSError(_ error: NSError) -> PasskeyException {
         return PasskeyException(
             errorType: .wkErrorDomain,
             message: error.localizedDescription,
-            details: "macOS unhandled error: \(error.domain)"
+            details: "iOS unhandled error: \(error.domain)"
         )
     }
 }
