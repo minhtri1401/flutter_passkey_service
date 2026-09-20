@@ -36,120 +36,180 @@ protocol PasskeyAuthService {
 
 @available(iOS 16.0, macOS 13.0, *)
 class PasskeyAuthServiceImpl: PasskeyAuthService {
-    let lock: NSLock = NSLock();
     private let window: ASPresentationAnchor
     private var registerController: RegisterController? = nil
     private var authenController: AuthenticateController? = nil
-    
+    /// True while an ASAuthorizationController sheet is up. Pigeon calls arrive on the main
+    /// thread, so a plain Bool is sufficient.
+    private var operationInFlight = false
+
     init(window: ASPresentationAnchor) {
         self.window = window
     }
-    
+
+    // MARK: PasskeyAuthService
+
     func authenticate(request: AuthGenerateOptionResponseData, completion: @escaping (Result<GetPasskeyAuthenticationResponseData, Error>) -> Void) {
-        guard let decodedChallenge = Data.fromBase64Url(request.challenge) else {
-            let error = convertCustomError(.decodingChallenge)
-            completion(.failure(PigeonError(code: "PASSKEY_ERROR", message: error.message, details: error)))
+        guard beginOperation() else {
+            completion(.failure(pigeonError(operationInProgressError())))
+            return
+        }
+        let finish = wrapCompletion(completion)
+
+        guard let challenge = Data.fromBase64Url(request.challenge) else {
+            finish(.failure(pigeonError(convertCustomError(.decodingChallenge))))
             return
         }
 
-        let platformProvider = ASAuthorizationPlatformPublicKeyCredentialProvider(relyingPartyIdentifier: request.rpId)
-        let credentialRequest = platformProvider.createCredentialAssertionRequest(
-            challenge: decodedChallenge
+        let provider = ASAuthorizationPlatformPublicKeyCredentialProvider(relyingPartyIdentifier: request.rpId)
+        let assertion = provider.createCredentialAssertionRequest(challenge: challenge)
+        assertion.allowedCredentials = parseCredentials(credentialIDs: request.allowCredentials.map { $0.id })
+        if let uv = userVerificationPreference(from: request.userVerification) {
+            assertion.userVerificationPreference = uv
+        }
+        applyPrfAssertionInput(request.extensions?.prf, to: assertion)
+        applyLargeBlobAssertionInput(request.extensions?.largeBlob, to: assertion)
+
+        let preferImmediate = request.preferImmediatelyAvailableCredentials ?? false
+        authenController = AuthenticateController(
+            window: window,
+            preferImmediatelyAvailableCredentials: preferImmediate,
+            completion: finish
         )
-                
-        credentialRequest.allowedCredentials = parseCredentials(credentialIDs: request.allowCredentials.map { e in e.id })
-                
-        if #available(iOS 18.0, macOS 15.0, *) {
-            if let prfEval = request.extensions?.prf?.eval {
-                if let firstSaltStr = prfEval["first"] as? String, let salt1 = Data.fromBase64Url(firstSaltStr) {
-                    var salt2: Data? = nil
-                    if let secondSaltStr = prfEval["second"] as? String {
-                        salt2 = Data.fromBase64Url(secondSaltStr)
-                    }
-                    let inputValues = ASAuthorizationPublicKeyCredentialPRFAssertionInput.InputValues(saltInput1: salt1, saltInput2: salt2)
-                    let prfInput = ASAuthorizationPublicKeyCredentialPRFAssertionInput.inputValues(inputValues)
-                    credentialRequest.prf = prfInput
-                }
-            }
-        }
-
-        if #available(iOS 17.0, macOS 14.0, *) {
-            if let largeBlobInput = request.extensions?.largeBlob {
-                if largeBlobInput.read == true {
-                    credentialRequest.largeBlob = ASAuthorizationPublicKeyCredentialLargeBlobAssertionInput.read
-                } else if let writeData = largeBlobInput.write {
-                    credentialRequest.largeBlob = ASAuthorizationPublicKeyCredentialLargeBlobAssertionInput.write(writeData.data)
-                }
-            }
-        }
-
-        authenController = AuthenticateController(window: self.window, completion: completion)
-        authenController?.run(request: credentialRequest, preferImmediatelyAvailableCredentials: request.preferImmediatelyAvailableCredentials ?? false)
-
+        authenController?.run(request: assertion)
     }
-    
+
     func register(option: RegisterGenerateOptionData, completion: @escaping (Result<CreatePasskeyResponseData, Error>) -> Void) {
-        guard let decodedChallenge = Data.fromBase64Url(option.challenge) else {
-            let error = convertCustomError(.decodingChallenge)
-            completion(.failure(PigeonError(code: "PASSKEY_ERROR", message: error.message, details: error)))
+        guard beginOperation() else {
+            completion(.failure(pigeonError(operationInProgressError())))
             return
         }
-        
-        let userId = option.user.id
-        guard let data = userId.data(using: .utf8) else {
-            let error = convertCustomError(.decodingChallenge)
-            completion(.failure(PigeonError(code: "PASSKEY_ERROR", message: error.message, details: error)))
+        let finish = wrapCompletion(completion)
+
+        guard let challenge = Data.fromBase64Url(option.challenge) else {
+            finish(.failure(pigeonError(convertCustomError(.decodingChallenge))))
             return
         }
-        
-        guard let decodedUserId = Data.fromBase64(data.base64EncodedString()) else {
-            let error = convertCustomError(.decodingChallenge)
-            completion(.failure(PigeonError(code: "PASSKEY_ERROR", message: error.message, details: error)))
+
+        // WebAuthn JSON carries user.id as base64url bytes. Android's Credential Manager decodes
+        // it the same way, so both platforms now produce the same user handle.
+        guard let userID = Data.fromBase64Url(option.user.id), !userID.isEmpty else {
+            finish(.failure(pigeonError(PasskeyException(
+                errorType: .invalidFormat,
+                message: "user.id must be base64url-encoded",
+                details: "WebAuthn user.id is the base64url encoding of the user handle bytes; received \"\(option.user.id)\""
+            ))))
             return
         }
-        
-        
-        let rp = option.rp.id
-        let platformProvider = ASAuthorizationPlatformPublicKeyCredentialProvider(relyingPartyIdentifier: rp)
-        let request = platformProvider.createCredentialRegistrationRequest(
-            challenge: decodedChallenge,
+
+        let provider = ASAuthorizationPlatformPublicKeyCredentialProvider(relyingPartyIdentifier: option.rp.id)
+        let request = provider.createCredentialRegistrationRequest(
+            challenge: challenge,
             name: option.user.name,
-            userID: decodedUserId
+            userID: userID
         )
-
+        if !option.user.displayName.isEmpty {
+            request.displayName = option.user.displayName
+        }
+        if let uv = userVerificationPreference(from: option.authenticatorSelection?.userVerification) {
+            request.userVerificationPreference = uv
+        }
+        if let kind = attestationKind(from: option.attestation) {
+            request.attestationPreference = kind
+        }
         if #available(iOS 17.4, macOS 13.5, *) {
-            request.excludedCredentials = parseCredentials(credentialIDs: option.excludeCredentials.map{ e in e.id })
+            request.excludedCredentials = parseCredentials(credentialIDs: option.excludeCredentials.map { $0.id })
         }
-        
-        if #available(iOS 18.0, macOS 15.0, *) {
-            if option.extensions.prf != nil {
-                let prfInput = ASAuthorizationPublicKeyCredentialPRFRegistrationInput.checkForSupport
-                request.prf = prfInput
-            }
-        }
+        applyPrfRegistrationInput(option.extensions.prf, to: request)
+        applyLargeBlobRegistrationInput(option.extensions.largeBlob, to: request)
 
-        if #available(iOS 17.0, macOS 14.0, *) {
-            if let largeBlobInput = option.extensions.largeBlob {
-                if largeBlobInput.support == "required" {
-                    request.largeBlob = ASAuthorizationPublicKeyCredentialLargeBlobRegistrationInput.supportRequired
-                } else {
-                    request.largeBlob = ASAuthorizationPublicKeyCredentialLargeBlobRegistrationInput.supportPreferred
-                }
-            }
-        }
-
-        registerController = RegisterController(window: self.window, username: option.user.name, completion: completion)
+        registerController = RegisterController(window: window, username: option.user.name, completion: finish)
         registerController?.run(request: request)
     }
-    
-    private func parseCredentials(credentialIDs: [String]) -> [ASAuthorizationPlatformPublicKeyCredentialDescriptor] {
-        return credentialIDs.compactMap {
-            if let credentialId = Data.fromBase64Url($0) {
-                return ASAuthorizationPlatformPublicKeyCredentialDescriptor.init(credentialID: credentialId)
-            } else {
-                return nil
-            }
+
+    // MARK: In-flight guard
+
+    private func beginOperation() -> Bool {
+        if operationInFlight { return false }
+        operationInFlight = true
+        return true
+    }
+
+    private func wrapCompletion<T>(_ completion: @escaping (Result<T, Error>) -> Void) -> (Result<T, Error>) -> Void {
+        return { [weak self] result in
+            self?.operationInFlight = false
+            completion(result)
         }
     }
+
+    private func operationInProgressError() -> PasskeyException {
+        PasskeyException(
+            errorType: .operationNotSupported,
+            message: "A passkey operation is already in progress",
+            details: "Wait for the pending register/authenticate call to complete before starting another"
+        )
+    }
+
+    // MARK: Extension inputs
+
+    @available(iOS 18.0, macOS 15.0, *)
+    private func prfInputValues(from eval: [String?: String?]) -> ASAuthorizationPublicKeyCredentialPRFAssertionInput.InputValues? {
+        guard let firstStr = eval["first"] as? String, let salt1 = Data.fromBase64Url(firstStr) else {
+            return nil
+        }
+        var salt2: Data? = nil
+        if let secondStr = eval["second"] as? String {
+            salt2 = Data.fromBase64Url(secondStr)
+        }
+        return ASAuthorizationPublicKeyCredentialPRFAssertionInput.InputValues(saltInput1: salt1, saltInput2: salt2)
+    }
+
+    private func applyPrfAssertionInput(_ prf: PrfExtensionInput?, to request: ASAuthorizationPlatformPublicKeyCredentialAssertionRequest) {
+        guard #available(iOS 18.0, macOS 15.0, *), let eval = prf?.eval, let values = prfInputValues(from: eval) else {
+            return
+        }
+        request.prf = .inputValues(values)
+    }
+
+    private func applyPrfRegistrationInput(_ prf: PrfExtensionInput?, to request: ASAuthorizationPlatformPublicKeyCredentialRegistrationRequest) {
+        guard #available(iOS 18.0, macOS 15.0, *), let prf = prf else {
+            return
+        }
+        if let eval = prf.eval, let values = prfInputValues(from: eval) {
+            // Evaluate salts at creation time; results come back in clientExtensionResults.prf.results.
+            request.prf = .inputValues(values)
+        } else {
+            request.prf = .checkForSupport
+        }
+    }
+
+    private func applyLargeBlobAssertionInput(_ input: LargeBlobExtensionAuthInput?, to request: ASAuthorizationPlatformPublicKeyCredentialAssertionRequest) {
+        guard #available(iOS 17.0, macOS 14.0, *), let input = input else {
+            return
+        }
+        if input.read == true {
+            request.largeBlob = .read
+        } else if let write = input.write {
+            request.largeBlob = .write(write.data)
+        }
+    }
+
+    private func applyLargeBlobRegistrationInput(_ input: LargeBlobExtensionRegistrationInput?, to request: ASAuthorizationPlatformPublicKeyCredentialRegistrationRequest) {
+        guard #available(iOS 17.0, macOS 14.0, *), let input = input else {
+            return
+        }
+        request.largeBlob = input.support == "required" ? .supportRequired : .supportPreferred
+    }
+
+    private func parseCredentials(credentialIDs: [String]) -> [ASAuthorizationPlatformPublicKeyCredentialDescriptor] {
+        credentialIDs.compactMap { id in
+            Data.fromBase64Url(id).map { ASAuthorizationPlatformPublicKeyCredentialDescriptor(credentialID: $0) }
+        }
+    }
+}
+
+/// Wraps a PasskeyException in the PigeonError shape Dart unwraps into PasskeyException.
+func pigeonError(_ exception: PasskeyException) -> PigeonError {
+    PigeonError(code: "PASSKEY_ERROR", message: exception.message, details: exception)
 }
 

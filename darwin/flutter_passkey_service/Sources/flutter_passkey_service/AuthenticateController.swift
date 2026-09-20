@@ -11,28 +11,27 @@ import FlutterMacOS
 class AuthenticateController: NSObject, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
     public var completion: ((Result<GetPasskeyAuthenticationResponseData, Error>) -> Void)?
     private let window: ASPresentationAnchor
+    private let preferImmediatelyAvailableCredentials: Bool
     private var authorizationController: ASAuthorizationController? = nil
-    
-    init(window: ASPresentationAnchor, completion: @escaping ((Result<GetPasskeyAuthenticationResponseData, Error>)  -> Void)) {
+
+    init(window: ASPresentationAnchor,
+         preferImmediatelyAvailableCredentials: Bool,
+         completion: @escaping ((Result<GetPasskeyAuthenticationResponseData, Error>) -> Void)) {
         self.completion = completion
         self.window = window
+        self.preferImmediatelyAvailableCredentials = preferImmediatelyAvailableCredentials
     }
-    
-    func run(request: ASAuthorizationPlatformPublicKeyCredentialAssertionRequest, preferImmediatelyAvailableCredentials: Bool) {
+
+    func run(request: ASAuthorizationPlatformPublicKeyCredentialAssertionRequest) {
         authorizationController = ASAuthorizationController(authorizationRequests: [request])
         authorizationController?.delegate = self
         authorizationController?.presentationContextProvider = self
-        
+
         if preferImmediatelyAvailableCredentials {
-            // If credentials are available, presents a modal sign-in sheet.
-            // If there are no locally saved credentials, no UI appears and
-            // the system passes ASAuthorizationError.Code.canceled to call
-            // `AccountManager.authorizationController(controller:didCompleteWithError:)`.
+            // Only local passkeys; with none available the system reports .canceled without UI.
             authorizationController?.performRequests(options: .preferImmediatelyAvailableCredentials)
         } else {
-            // If credentials are available, presents a modal sign-in sheet.
-            // If there are no locally saved credentials, the system presents a QR code to allow signing in with a
-            // passkey from a nearby device.
+            // Shows the QR / nearby-device option when no local passkey matches.
             authorizationController?.performRequests()
         }
     }
@@ -94,7 +93,7 @@ class AuthenticateController: NSObject, ASAuthorizationControllerDelegate, ASAut
                 message: "Unexpected authorization response type",
                 details: "Expected ASAuthorizationPublicKeyCredentialAssertion"
             )
-            completion?(.failure(PigeonError(code: "PASSKEY_ERROR", message: passkeyError.message, details: passkeyError)))
+            completion?(.failure(pigeonError(passkeyError)))
             break
         }
     }
@@ -102,11 +101,11 @@ class AuthenticateController: NSObject, ASAuthorizationControllerDelegate, ASAut
     func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
         if let err = error as? ASAuthorizationError {
             let passkeyError = convertASAuthorizationError(err)
-            completion?(.failure(PigeonError(code: "PASSKEY_ERROR", message: passkeyError.message, details: passkeyError)))
+            completion?(.failure(pigeonError(passkeyError)))
         } else {
             let nsError = error as NSError
             let passkeyError = convertNSError(nsError)
-            completion?(.failure(PigeonError(code: "PASSKEY_ERROR", message: passkeyError.message, details: passkeyError)))
+            completion?(.failure(pigeonError(passkeyError)))
         }
     }
 

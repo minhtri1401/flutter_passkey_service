@@ -26,20 +26,24 @@ class RegisterController: NSObject, ASAuthorizationControllerDelegate, ASAuthori
         switch authorization.credential {
         case let r as ASAuthorizationPublicKeyCredentialRegistration:
             var prfOutput: PrfExtensionOutput? = nil
-            if #available(iOS 18.0, macOS 15.0, *) {
-                if let platformReg = r as? ASAuthorizationPlatformPublicKeyCredentialRegistration, let prfResult = platformReg.prf {
-                    prfOutput = PrfExtensionOutput(enabled: prfResult.isSupported, results: nil)
+            if #available(iOS 18.0, macOS 15.0, *),
+               let platformReg = r as? ASAuthorizationPlatformPublicKeyCredentialRegistration,
+               let prfResult = platformReg.prf {
+                var results: [String?: String?]? = nil
+                if let first = prfResult.first {
+                    results = ["first": first.withUnsafeBytes { Data($0) }.toBase64URL()]
+                    if let second = prfResult.second {
+                        results?["second"] = second.withUnsafeBytes { Data($0) }.toBase64URL()
+                    }
                 }
+                prfOutput = PrfExtensionOutput(enabled: prfResult.isSupported, results: results)
             }
 
             var largeBlobOutput: LargeBlobExtensionRegistrationOutput? = nil
-            if #available(iOS 17.0, macOS 14.0, *) {
-                if let platformReg = r as? ASAuthorizationPlatformPublicKeyCredentialRegistration,
-                   let largeBlobResult = platformReg.largeBlob {
-                    largeBlobOutput = LargeBlobExtensionRegistrationOutput(
-                        supported: largeBlobResult.isSupported
-                    )
-                }
+            if #available(iOS 17.0, macOS 14.0, *),
+               let platformReg = r as? ASAuthorizationPlatformPublicKeyCredentialRegistration,
+               let largeBlobResult = platformReg.largeBlob {
+                largeBlobOutput = LargeBlobExtensionRegistrationOutput(supported: largeBlobResult.isSupported)
             }
 
             let response = CreatePasskeyResponseData(
@@ -50,10 +54,12 @@ class RegisterController: NSObject, ASAuthorizationControllerDelegate, ASAuthori
                 response: CreatePasskeyResponse(
                     clientDataJSON: r.rawClientDataJSON.toBase64URL(),
                     attestationObject: r.rawAttestationObject?.toBase64URL() ?? "",
-                    transports: ["internal"],
-                    authenticatorData: "", // iOS doesn't provide this separately
-                    publicKeyAlgorithm: -7, // ES256
-                    publicKey: "" // iOS doesn't provide this separately
+                    // Apple passkeys are synced via iCloud Keychain, so they are reachable both
+                    // locally and through the hybrid (cross-device) transport.
+                    transports: ["internal", "hybrid"],
+                    authenticatorData: nil,   // not exposed separately by AuthenticationServices
+                    publicKeyAlgorithm: -7,   // Apple platform authenticators only produce ES256
+                    publicKey: nil            // not exposed separately by AuthenticationServices
                 ),
                 clientExtensionResults: CreatePasskeyExtension(
                     credProps: nil,
@@ -70,7 +76,7 @@ class RegisterController: NSObject, ASAuthorizationControllerDelegate, ASAuthori
                 message: "Unexpected authorization response type",
                 details: "Expected ASAuthorizationPublicKeyCredentialRegistration"
             )
-            completion?(.failure(PigeonError(code: "PASSKEY_ERROR", message: error.message, details: error)))
+            completion?(.failure(pigeonError(error)))
             break
         }
     }
@@ -78,11 +84,11 @@ class RegisterController: NSObject, ASAuthorizationControllerDelegate, ASAuthori
     func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
         if let err = error as? ASAuthorizationError {
             let passkeyError = convertASAuthorizationError(err)
-            completion?(.failure(PigeonError(code: "PASSKEY_ERROR", message: passkeyError.message, details: passkeyError)))
+            completion?(.failure(pigeonError(passkeyError)))
         } else {
             let nsError = error as NSError
             let passkeyError = convertNSError(nsError)
-            completion?(.failure(PigeonError(code: "PASSKEY_ERROR", message: passkeyError.message, details: passkeyError)))
+            completion?(.failure(pigeonError(passkeyError)))
         }
     }
 

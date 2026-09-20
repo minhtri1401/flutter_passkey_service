@@ -31,3 +31,32 @@ extension Data {
             .replacingOccurrences(of: "=", with: "")
     }
 }
+
+import AuthenticationServices
+
+// MARK: - WebAuthn string → AuthenticationServices enum mapping
+
+/// Maps a WebAuthn `userVerification` string to the platform preference.
+/// Returns nil for unknown values so the caller leaves the platform default in place.
+@available(iOS 15.0, macOS 12.0, *)
+func userVerificationPreference(from raw: String?) -> ASAuthorizationPublicKeyCredentialUserVerificationPreference? {
+    switch raw {
+    case "required": return .required
+    case "preferred": return .preferred
+    case "discouraged": return .discouraged
+    default: return nil
+    }
+}
+
+/// Maps a WebAuthn `attestation` string to the platform attestation kind.
+/// Returns nil for unknown values so the caller leaves the platform default in place.
+@available(iOS 15.0, macOS 12.0, *)
+func attestationKind(from raw: String?) -> ASAuthorizationPublicKeyCredentialAttestationKind? {
+    switch raw {
+    case "none": return ASAuthorizationPublicKeyCredentialAttestationKind.none
+    case "indirect": return .indirect
+    case "direct": return .direct
+    case "enterprise": return .enterprise
+    default: return nil
+    }
+}
