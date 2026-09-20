@@ -1,4 +1,5 @@
 import Foundation
+import AuthenticationServices
 
 // MARK: - Data Extensions for Base64URL encoding/decoding
 extension Data {
@@ -32,13 +33,11 @@ extension Data {
     }
 }
 
-import AuthenticationServices
-
 // MARK: - WebAuthn string → AuthenticationServices enum mapping
 
 /// Maps a WebAuthn `userVerification` string to the platform preference.
 /// Returns nil for unknown values so the caller leaves the platform default in place.
-@available(iOS 15.0, macOS 12.0, *)
+@available(iOS 16.0, macOS 13.0, *)
 func userVerificationPreference(from raw: String?) -> ASAuthorizationPublicKeyCredentialUserVerificationPreference? {
     switch raw {
     case "required": return .required
@@ -50,7 +49,7 @@ func userVerificationPreference(from raw: String?) -> ASAuthorizationPublicKeyCr
 
 /// Maps a WebAuthn `attestation` string to the platform attestation kind.
 /// Returns nil for unknown values so the caller leaves the platform default in place.
-@available(iOS 15.0, macOS 12.0, *)
+@available(iOS 16.0, macOS 13.0, *)
 func attestationKind(from raw: String?) -> ASAuthorizationPublicKeyCredentialAttestationKind? {
     switch raw {
     case "none": return ASAuthorizationPublicKeyCredentialAttestationKind.none

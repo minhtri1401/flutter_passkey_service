@@ -41,3 +41,5 @@ docs/
 # OS files
 .DS_Store
 Thumbs.db
+darwin/flutter_passkey_service/.build/
+darwin/flutter_passkey_service/.swiftpm/

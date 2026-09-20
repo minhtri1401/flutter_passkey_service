@@ -1,4 +1,5 @@
 import AuthenticationServices
+import CryptoKit
 import LocalAuthentication
 import Foundation
 

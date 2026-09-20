@@ -29,7 +29,7 @@ class _PasskeyExampleState extends State<PasskeyExample> {
         challenge: 'your-server-generated-challenge',
         rpName: 'My App',
         rpId: 'example.com', // Your domain
-        userId: 'user-123',
+        userId: 'dXNlci0xMjM', // base64url of the user handle bytes ("user-123")
         username: 'user@example.com',
         displayName: 'John Doe',
       );
@@ -292,7 +292,7 @@ class _PasskeyExampleState extends State<PasskeyExample> {
       "challenge": "example-challenge-from-server",
       "rp": {"name": "My App", "id": "example.com"},
       "user": {
-        "id": "user-123",
+        "id": "dXNlci0xMjM",
         "name": "user@example.com",
         "displayName": "John Doe",
       },

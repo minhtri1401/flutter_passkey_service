@@ -80,7 +80,11 @@ Before you begin, ensure you have the following installed:
 ```
 flutter_passkey_service/
 ├── android/                 # Android platform implementation
-├── ios/                     # iOS platform implementation  
+├── darwin/
+│   ├── flutter_passkey_service.podspec        # CocoaPods spec (iOS + macOS)
+│   └── flutter_passkey_service/
+│       ├── Package.swift                      # Swift Package Manager manifest
+│       └── Sources/flutter_passkey_service/   # Shared Swift sources + PrivacyInfo.xcprivacy
 ├── lib/                     # Dart library code
 │   ├── pigeons/            # Pigeon-generated interfaces
 │   └── *.dart              # Public API files

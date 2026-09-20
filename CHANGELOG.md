@@ -22,14 +22,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - iOS 18+ / macOS 15+ excluded-credential matches now map to `excludeCredentialsMatch` instead of `unknownError`.
-- "No credentials" and "domain not associated" detection no longer depends only on the English error text.
+- "No credentials" and "domain not associated" detection no longer depends on one exact English sentence; it scans the error's description, failure reason, debug description and underlying errors. Matching is still against English needles, so on a non-English device a no-credentials cancel may still surface as `userCancelled`.
 - Android no longer crashes when a credential provider omits optional response fields (`transports`, `authenticatorData`, `publicKey`, `publicKeyAlgorithm`, `userHandle`); a missing required field yields `invalidResponse`.
 - iOS/macOS report `transports: ["internal", "hybrid"]` and `null` (not `""`) for fields AuthenticationServices does not expose.
 - A second `register`/`authenticate` call while one is pending fails fast with `operationNotSupported` instead of hanging the first call forever.
 - Stale macOS `Messages.swift` eliminated (single generated file).
+- Android maps a WebAuthn `InvalidStateError` during registration (an `excludeCredentials` entry matched) to `excludeCredentialsMatch`, the same type iOS/macOS return.
 
 ### Migration
-1. **iOS/macOS user handle.** Passkeys registered on iOS/macOS with 0.0.x carry a user handle equal to the UTF-8 bytes of the `userId` string you passed. Their assertions still return the same `userHandle` as before. New registrations use the base64url-decoded bytes, matching Android. If your server compares `userHandle` to its stored `user.id`, accept both forms during the transition or re-register iOS users. If you passed a non-base64url string (for example `user-123`), encode it first; iOS/macOS now reject strings that are not valid base64url with `invalidFormat`.
+1. **iOS/macOS user handle.** Passkeys registered on iOS/macOS with 0.0.x carry a user handle equal to the UTF-8 bytes of the `userId` string you passed. Their assertions still return the same `userHandle` as before. New registrations use the base64url-decoded bytes, matching Android. If your server compares `userHandle` to its stored `user.id`, accept both forms during the transition or re-register iOS users. iOS/macOS now decode `user.id` as base64url bytes exactly as Android does. A string that happens to be valid base64 but is not your intended handle (for example `user-123`) decodes to unintended bytes rather than failing, so base64url-encode your handle before sending it. `invalidFormat` is returned only when the string cannot be decoded at all or decodes to zero bytes.
 2. **JSON defaults.** If you relied on the plugin adding `userVerification: required` or `authenticatorAttachment: platform` to server JSON, send them from the server.
 3. **CocoaPods apps:** run `pod install` in `ios/` and `macos/` after upgrading.
 

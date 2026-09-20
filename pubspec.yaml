@@ -8,7 +8,7 @@ documentation: https://pub.dev/documentation/flutter_passkey_service
 
 environment:
   sdk: ^3.8.1
-  flutter: '>=3.3.0'
+  flutter: '>=3.24.0'
 
 dependencies:
   flutter:

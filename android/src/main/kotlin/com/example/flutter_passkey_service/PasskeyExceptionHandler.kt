@@ -78,7 +78,7 @@ class PasskeyExceptionHandler {
                         cause = exception
                     )
                 } else {
-                    handleDomException(exception.domError, exception)
+                    handleDomException(exception.domError, exception, isRegistration = true)
                 }
             }
 
@@ -143,7 +143,8 @@ class PasskeyExceptionHandler {
 
             is GetPublicKeyCredentialDomException -> handleDomException(
                 exception.domError,
-                exception
+                exception,
+                isRegistration = false
             )
 
             is SecurityException -> PasskeyOperationException(
@@ -186,7 +187,7 @@ class PasskeyExceptionHandler {
      * @param originalException The original exception that was thrown
      * @return A throwable [PasskeyOperationException] with DOM error details
      */
-    private fun handleDomException(domError: DomError, originalException: Exception): PasskeyOperationException {
+    private fun handleDomException(domError: DomError, originalException: Exception, isRegistration: Boolean): PasskeyOperationException {
         val errorMessage = originalException.message ?: ""
         val (errorType, message) = when (domError) {
             is AbortError -> PasskeyErrorType.USER_CANCELLED to "The passkey operation was aborted"
@@ -197,7 +198,11 @@ class PasskeyExceptionHandler {
             is HierarchyRequestError -> PasskeyErrorType.DOM_ERROR to "Invalid passkey operation hierarchy"
             is InUseAttributeError -> PasskeyErrorType.DOM_ERROR to "Passkey attribute already in use"
             is InvalidCharacterError -> PasskeyErrorType.INVALID_FORMAT to "Invalid characters in passkey data"
-            is InvalidStateError -> PasskeyErrorType.DOM_ERROR to "Passkey operation in invalid state"
+            is InvalidStateError -> if (isRegistration) {
+                PasskeyErrorType.EXCLUDE_CREDENTIALS_MATCH to "A passkey for this account already exists on this device"
+            } else {
+                PasskeyErrorType.DOM_ERROR to "Passkey operation in invalid state"
+            }
             is InvalidNodeTypeError -> PasskeyErrorType.DOM_ERROR to "Invalid passkey node type"
             is InvalidModificationError -> PasskeyErrorType.DOM_ERROR to "Passkey cannot be modified"
             is NamespaceError -> PasskeyErrorType.DOM_ERROR to "Passkey namespace error"

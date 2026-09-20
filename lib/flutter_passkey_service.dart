@@ -45,6 +45,8 @@ class FlutterPasskeyService {
   }
 
   /// Helper method to create registration options
+  ///
+  /// [userId] must be the base64url encoding of the user handle bytes (WebAuthn `user.id`); it is decoded to bytes on every platform.
   /// Recommended KEK Derivation Flow:
   /// 1. Register a new passkey with [enablePrf] = true.
   /// 2. Check the [RegisterResponseData.clientExtensionResults.prf.enabled] flag to verify PRF support.
@@ -173,7 +175,7 @@ class FlutterPasskeyService {
   /// final json = {
   ///   "challenge": "base64url-challenge",
   ///   "rp": {"name": "My App", "id": "example.com"},
-  ///   "user": {"id": "user-123", "name": "user@example.com", "displayName": "John Doe"},
+  ///   "user": {"id": "dXNlci0xMjM", "name": "user@example.com", "displayName": "John Doe"},
   ///   "pubKeyCredParams": [{"alg": -7, "type": "public-key"}],
   ///   "timeout": 60000,
   ///   "attestation": "none"

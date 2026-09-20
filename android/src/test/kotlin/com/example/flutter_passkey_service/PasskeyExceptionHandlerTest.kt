@@ -3,7 +3,9 @@ package com.example.flutter_passkey_service
 import androidx.credentials.exceptions.CreateCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.NoCredentialException
+import androidx.credentials.exceptions.domerrors.InvalidStateError
 import androidx.credentials.exceptions.domerrors.NotAllowedError
+import androidx.credentials.exceptions.publickeycredential.CreatePublicKeyCredentialDomException
 import androidx.credentials.exceptions.publickeycredential.GetPublicKeyCredentialDomException
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -35,6 +37,18 @@ class PasskeyExceptionHandlerTest {
         val e = handler.handleAuthenticationException(GetPublicKeyCredentialDomException(NotAllowedError(), "denied"))
         assertEquals(PasskeyErrorType.NOT_ALLOWED, e.passkeyException.errorType)
         assertEquals("denied", e.passkeyException.details)
+    }
+
+    @Test
+    fun registration_invalidStateDomError_mapsToExcludeCredentialsMatch() {
+        val e = handler.handleRegistrationException(CreatePublicKeyCredentialDomException(InvalidStateError(), "exists"))
+        assertEquals(PasskeyErrorType.EXCLUDE_CREDENTIALS_MATCH, e.passkeyException.errorType)
+    }
+
+    @Test
+    fun authentication_invalidStateDomError_staysDomError() {
+        val e = handler.handleAuthenticationException(GetPublicKeyCredentialDomException(InvalidStateError(), "state"))
+        assertEquals(PasskeyErrorType.DOM_ERROR, e.passkeyException.errorType)
     }
 
     @Test

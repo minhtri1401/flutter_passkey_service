@@ -56,7 +56,7 @@ class PasskeyAuthServiceImpl: PasskeyAuthService {
         }
         let finish = wrapCompletion(completion)
 
-        guard let challenge = Data.fromBase64Url(request.challenge) else {
+        guard let challenge = Data.fromBase64Url(request.challenge), !challenge.isEmpty else {
             finish(.failure(pigeonError(convertCustomError(.decodingChallenge))))
             return
         }
@@ -67,7 +67,10 @@ class PasskeyAuthServiceImpl: PasskeyAuthService {
         if let uv = userVerificationPreference(from: request.userVerification) {
             assertion.userVerificationPreference = uv
         }
-        applyPrfAssertionInput(request.extensions?.prf, to: assertion)
+        guard applyPrfAssertionInput(request.extensions?.prf, to: assertion) else {
+            finish(.failure(pigeonError(invalidPrfEvalError())))
+            return
+        }
         applyLargeBlobAssertionInput(request.extensions?.largeBlob, to: assertion)
 
         let preferImmediate = request.preferImmediatelyAvailableCredentials ?? false
@@ -86,7 +89,7 @@ class PasskeyAuthServiceImpl: PasskeyAuthService {
         }
         let finish = wrapCompletion(completion)
 
-        guard let challenge = Data.fromBase64Url(option.challenge) else {
+        guard let challenge = Data.fromBase64Url(option.challenge), !challenge.isEmpty else {
             finish(.failure(pigeonError(convertCustomError(.decodingChallenge))))
             return
         }
@@ -120,7 +123,10 @@ class PasskeyAuthServiceImpl: PasskeyAuthService {
         if #available(iOS 17.4, macOS 13.5, *) {
             request.excludedCredentials = parseCredentials(credentialIDs: option.excludeCredentials.map { $0.id })
         }
-        applyPrfRegistrationInput(option.extensions.prf, to: request)
+        guard applyPrfRegistrationInput(option.extensions.prf, to: request) else {
+            finish(.failure(pigeonError(invalidPrfEvalError())))
+            return
+        }
         applyLargeBlobRegistrationInput(option.extensions.largeBlob, to: request)
 
         registerController = RegisterController(window: window, username: option.user.name, completion: finish)
@@ -164,23 +170,32 @@ class PasskeyAuthServiceImpl: PasskeyAuthService {
         return ASAuthorizationPublicKeyCredentialPRFAssertionInput.InputValues(saltInput1: salt1, saltInput2: salt2)
     }
 
-    private func applyPrfAssertionInput(_ prf: PrfExtensionInput?, to request: ASAuthorizationPlatformPublicKeyCredentialAssertionRequest) {
-        guard #available(iOS 18.0, macOS 15.0, *), let eval = prf?.eval, let values = prfInputValues(from: eval) else {
-            return
-        }
+    /// Returns false when eval is present but its "first" salt is missing or not base64url.
+    private func applyPrfAssertionInput(_ prf: PrfExtensionInput?, to request: ASAuthorizationPlatformPublicKeyCredentialAssertionRequest) -> Bool {
+        guard #available(iOS 18.0, macOS 15.0, *), let eval = prf?.eval else { return true }
+        guard let values = prfInputValues(from: eval) else { return false }
         request.prf = .inputValues(values)
+        return true
     }
 
-    private func applyPrfRegistrationInput(_ prf: PrfExtensionInput?, to request: ASAuthorizationPlatformPublicKeyCredentialRegistrationRequest) {
-        guard #available(iOS 18.0, macOS 15.0, *), let prf = prf else {
-            return
-        }
-        if let eval = prf.eval, let values = prfInputValues(from: eval) {
-            // Evaluate salts at creation time; results come back in clientExtensionResults.prf.results.
-            request.prf = .inputValues(values)
-        } else {
+    private func applyPrfRegistrationInput(_ prf: PrfExtensionInput?, to request: ASAuthorizationPlatformPublicKeyCredentialRegistrationRequest) -> Bool {
+        guard #available(iOS 18.0, macOS 15.0, *), let prf = prf else { return true }
+        guard let eval = prf.eval else {
             request.prf = .checkForSupport
+            return true
         }
+        guard let values = prfInputValues(from: eval) else { return false }
+        // Evaluate salts at creation time; results come back in clientExtensionResults.prf.results.
+        request.prf = .inputValues(values)
+        return true
+    }
+
+    private func invalidPrfEvalError() -> PasskeyException {
+        PasskeyException(
+            errorType: .invalidFormat,
+            message: "prf.eval.first must be base64url-encoded",
+            details: "The PRF extension was requested with an eval dictionary whose \"first\" salt is missing or not base64url"
+        )
     }
 
     private func applyLargeBlobAssertionInput(_ input: LargeBlobExtensionAuthInput?, to request: ASAuthorizationPlatformPublicKeyCredentialAssertionRequest) {

@@ -205,7 +205,8 @@ internal object PasskeyJson {
         (this[key] as? JsonPrimitive)?.takeUnless { it is JsonNull }?.contentOrNull
 
     private fun JsonObject.optionalStringArray(key: String): List<String>? =
-        (this[key])?.takeUnless { it is JsonNull }?.jsonArray?.map { it.jsonPrimitive.content }
+        (this[key])?.takeUnless { it is JsonNull }?.jsonArray
+            ?.mapNotNull { (it as? JsonPrimitive)?.takeUnless { p -> p is JsonNull }?.contentOrNull }
 
     private fun JsonObject.requiredString(key: String): String =
         optionalString(key) ?: throw missing(key)

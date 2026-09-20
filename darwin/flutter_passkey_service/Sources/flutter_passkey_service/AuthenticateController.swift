@@ -1,4 +1,5 @@
 import AuthenticationServices
+import CryptoKit
 import LocalAuthentication
 import Foundation
 #if os(iOS)
@@ -107,7 +108,10 @@ class AuthenticateController: NSObject, ASAuthorizationControllerDelegate, ASAut
     }
 
     func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
-        self.window
+        #if os(macOS)
+        self.window.makeKeyAndOrderFront(nil)
+        #endif
+        return self.window
     }
 }
 
