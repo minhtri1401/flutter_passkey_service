@@ -43,3 +43,6 @@ docs/
 Thumbs.db
 darwin/flutter_passkey_service/.build/
 darwin/flutter_passkey_service/.swiftpm/
+
+# Maintainer scripts
+tool/

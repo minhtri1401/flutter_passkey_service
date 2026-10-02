@@ -1,10 +1,25 @@
-# Flutter Passkey Service - WebAuthn FIDO2 Passwordless Authentication
+# flutter_passkey_service: Passkeys (WebAuthn / FIDO2) for Flutter on iOS, macOS and Android
 
 [![pub package](https://img.shields.io/pub/v/flutter_passkey_service.svg)](https://pub.dev/packages/flutter_passkey_service)
 [![Pub Points](https://img.shields.io/pub/points/flutter_passkey_service)](https://pub.dev/packages/flutter_passkey_service/score)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A robust, production-ready Flutter plugin for integrating **Passkeys** (WebAuthn/FIDO2) passwordless authentication on iOS, macOS, and Android. Transform user authentication with biometric security and eliminate passwords.
+**flutter_passkey_service** is an open-source Flutter plugin that adds passkey registration and sign-in (WebAuthn / FIDO2) to iOS, macOS and Android apps. It wraps Apple's `AuthenticationServices` and Android's `CredentialManager` behind one type-safe Dart API, works with any WebAuthn server, and supports the PRF and largeBlob extensions for key derivation and on-credential storage.
+
+Last updated: 2026-10-03 · Current version: 0.1.0 · License: MIT
+
+### At a glance
+
+| | |
+|---|---|
+| **What it does** | Create a passkey (`register`) and sign in with a passkey (`authenticate`) using Face ID, Touch ID, fingerprint or device PIN |
+| **Platforms** | iOS 16+, macOS 13+, Android API 28+ (library minSdk 23) |
+| **Not supported** | Flutter web, Windows, Linux, hardware security keys, conditional UI / passkey autofill |
+| **Backend** | Any WebAuthn relying-party server (SimpleWebAuthn, webauthn4j, py_webauthn, go-webauthn, Corbado, Hanko, ...) |
+| **Extensions** | PRF (iOS 18+ / macOS 15+ / Android), largeBlob (iOS 17+ / macOS 14+ / Android), credProps |
+| **Native APIs** | `ASAuthorizationPlatformPublicKeyCredentialProvider` (Darwin), `androidx.credentials.CredentialManager` 1.6.0 (Android) |
+| **Errors** | One `PasskeyException` with a typed `PasskeyErrorType` enum on every platform |
+| **For AI agents** | [`llms.txt`](./llms.txt), [`llms-full.txt`](./llms-full.txt), [`context7.json`](./context7.json) |
 
 ## 📖 Table of Contents
 
@@ -21,6 +36,9 @@ A robust, production-ready Flutter plugin for integrating **Passkeys** (WebAuthn
   - [Working with Server JSON](#3-working-with-server-json)
   - [Error Handling](#4-error-handling)
 - [Advanced Usage](#️-advanced-usage)
+- [How it compares](#how-it-compares)
+- [FAQ](#faq)
+- [Guides](#guides)
 - [Security Considerations](#-security-considerations)
 - [Contributing & Support](#-contributing--support)
 - [License](#-license)
@@ -53,7 +71,7 @@ Add `flutter_passkey_service` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  flutter_passkey_service: ^0.0.3
+  flutter_passkey_service: ^0.1.0
 ```
 
 Run:
@@ -94,7 +112,7 @@ flutter pub get
 
    ```json
    [{
-     "relation": ["delegate_permission/common.handle_all_urls"],
+     "relation": ["delegate_permission/common.get_login_creds", "delegate_permission/common.handle_all_urls"],
      "target": {
        "namespace": "android_app",
        "package_name": "com.yourcompany.yourapp",
@@ -283,6 +301,68 @@ final customOptions = RegisterGenerateOptionData(
   ),
 );
 ```
+
+## How it compares
+
+Facts below were checked against each package's pub.dev page on 2026-10-03. Verify before choosing; both projects move quickly.
+
+| | flutter_passkey_service | [passkeys](https://pub.dev/packages/passkeys) (Corbado) | [local_auth](https://pub.dev/packages/local_auth) |
+|---|---|---|---|
+| Purpose | WebAuthn passkey registration and assertion against your own server | WebAuthn passkey registration and assertion, optional Corbado backend | Device-local biometric prompt only; no server-verifiable credential |
+| Platforms | iOS, macOS, Android | iOS, macOS, Android, Web, Windows | iOS, macOS, Android, Windows |
+| PRF extension | Yes (iOS 18+, macOS 15+, Android) | Yes (iOS 18+, macOS 15+, Android, Web, Windows) | n/a |
+| largeBlob extension | Yes (iOS 17+, macOS 14+, Android) | Not documented on pub.dev as of 2026-10 | n/a |
+| Server JSON helpers | `createRegistrationOptionsFromJson` / `createAuthenticationOptionsFromJson` | Typed request objects | n/a |
+| Platform channel | Pigeon (generated, type-safe) | Federated plugin | Federated plugin |
+| License | MIT | BSD-3-Clause | BSD-3-Clause |
+
+Choose **flutter_passkey_service** when you want a small, backend-agnostic mobile and desktop passkey client with PRF and largeBlob. Choose **passkeys** when you also need web or Windows. Use **local_auth** only for gating UI behind a biometric check, since it produces nothing a server can verify.
+
+## FAQ
+
+**What is a passkey?**
+A passkey is a FIDO2 / WebAuthn credential: a public-private key pair created by the device, unlocked with biometrics or the device PIN, and synced through iCloud Keychain or Google Password Manager. The server stores only the public key, so there is no password to phish or leak.
+
+**Does flutter_passkey_service work with any WebAuthn backend?**
+Yes. It exchanges standard WebAuthn JSON (`PublicKeyCredentialCreationOptionsJSON` / `PublicKeyCredentialRequestOptionsJSON`) and returns the standard credential response fields. Any relying-party library can verify the result. See the [server integration guide](./doc/guides/server-integration.md).
+
+**Which OS versions are required?**
+iOS 16.0, macOS 13.0 and Android 9 (API 28) with Google Play services. The Android library compiles for minSdk 23 but Credential Manager passkeys need API 28+. PRF needs iOS 18 / macOS 15; largeBlob needs iOS 17 / macOS 14.
+
+**Does it support Flutter web, Windows or Linux?**
+No. This plugin covers iOS, macOS and Android only. For web, use the browser WebAuthn API directly or a package that wraps it.
+
+**Do passkeys sync between a user's devices?**
+Yes, through the platform provider: iCloud Keychain on Apple devices and Google Password Manager on Android. Cross-ecosystem sign-in uses the hybrid (QR code) flow that the OS presents automatically.
+
+**Why do I get `domainNotAssociated` on iOS?**
+Apple could not validate `https://<rpId>/.well-known/apple-app-site-association` for your Team ID and bundle ID, or the Associated Domains capability is missing. See [troubleshooting](./doc/guides/troubleshooting.md).
+
+**Why do I get `noCredentialsAvailable`?**
+No passkey exists for `rpId` on this device or in the synced keychain, or `allowCredentials` listed IDs the device does not have. Offer registration, or send an empty `allowCredentials` list for discoverable sign-in.
+
+**How do I derive an encryption key from a passkey?**
+Register with `enablePrf: true`, then authenticate with `prfEval: {'first': base64urlSalt}` and read `response.clientExtensionResults?.prf?.results?['first']`. The 32-byte output is suitable as a key-encryption key for local data. See the [PRF guide](./kek_feature_article.md).
+
+**Can I store data on the passkey?**
+Yes, up to about 1 KB with the largeBlob extension. Register with `enableLargeBlob: true`, then authenticate with `largeBlobWrite: bytes` or `largeBlobRead: true`. See the [largeBlob guide](./large_blob_article.md).
+
+**Does it support hardware security keys or conditional UI (passkey autofill)?**
+No. Only platform passkeys are requested, and the plugin does not call the autofill / conditional-mediation APIs.
+
+**How is this different from local_auth?**
+`local_auth` shows a biometric prompt and returns a boolean; nothing is sent to a server. `flutter_passkey_service` produces a signed WebAuthn assertion that your server verifies, so it replaces the password rather than guarding the UI.
+
+**What changed in 0.1.0?**
+`ios/` and `macos/` merged into one `darwin/` Swift package with SPM support, iOS/macOS now base64url-decode `user.id` like Android, the JSON helpers stopped injecting defaults, and several option fields became nullable. See [Migration to 0.1.0](#migration-to-010) and the [CHANGELOG](./CHANGELOG.md).
+
+## Guides
+
+- [Error reference](./doc/guides/error-reference.md): every `PasskeyErrorType` value, which platform raises it, and what to do.
+- [Server integration](./doc/guides/server-integration.md): JSON shapes, base64url rules, user handle and origin handling.
+- [Troubleshooting](./doc/guides/troubleshooting.md): domain association, "no credentials", emulators, macOS entitlements.
+- [Deriving a Key Encryption Key with PRF](./kek_feature_article.md) and [storing data with largeBlob](./large_blob_article.md).
+- [API reference on pub.dev](https://pub.dev/documentation/flutter_passkey_service/latest/).
 
 ## 🔐 Security Considerations
 

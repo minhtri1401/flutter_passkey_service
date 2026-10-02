@@ -1,0 +1,53 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "projectTitle": "flutter_passkey_service",
+  "description": "Flutter plugin for passkey (WebAuthn / FIDO2) registration and sign-in on iOS, macOS and Android, with PRF and largeBlob extension support.",
+  "folders": [],
+  "excludeFolders": [
+    "plans",
+    "specs",
+    "types_check",
+    "build",
+    ".dart_tool",
+    ".fvm",
+    ".github",
+    ".superpowers",
+    "docs",
+    "example/android",
+    "example/ios",
+    "example/macos",
+    "example/test",
+    "test",
+    "android/src/test",
+    "darwin/flutter_passkey_service/Tests"
+  ],
+  "excludeFiles": [
+    "CLAUDE.md",
+    "CONTRIBUTING.md",
+    "pubspec.lock",
+    "messages.g.dart",
+    "Messages.kt",
+    "Messages.swift",
+    "pull_request_template.md",
+    "widget_test.dart"
+  ],
+  "rules": [
+    "Import with `import 'package:flutter_passkey_service/flutter_passkey_service.dart';` and call the static methods on `FlutterPasskeyService`; there is no instance to construct.",
+    "Always generate the WebAuthn challenge on the server with a cryptographically secure RNG and verify the returned response on the server. The plugin is client-side only.",
+    "When the server already returns WebAuthn JSON (PublicKeyCredentialCreationOptions / PublicKeyCredentialRequestOptions), use `createRegistrationOptionsFromJson` / `createAuthenticationOptionsFromJson` instead of rebuilding options by hand.",
+    "`userId` / `user.id` must be the base64url encoding of the user handle bytes (for example `dXNlci0xMjM`), never a raw string like `user-123`.",
+    "`rpId` must exactly equal the domain that hosts `/.well-known/apple-app-site-association` (iOS/macOS) and `/.well-known/assetlinks.json` (Android); otherwise the call fails with `PasskeyErrorType.domainNotAssociated`.",
+    "Wrap `register` and `authenticate` in `try { } on PasskeyException catch (e)` and switch on `e.errorType`; treat `userCancelled` and `noCredentialsAvailable` as expected outcomes, not crashes.",
+    "PRF key derivation requires iOS 18+ / macOS 15+ / a modern Android passkey provider. Enable it at registration with `enablePrf: true`, then pass a base64url salt via `prfEval: {'first': salt}` at authentication and read `response.clientExtensionResults?.prf?.results?['first']`.",
+    "largeBlob requires iOS 17+ / macOS 14+. Enable it with `enableLargeBlob: true` at registration; at authentication pass either `largeBlobRead: true` or `largeBlobWrite: bytes`, never both. The blob is limited to about 1 KB.",
+    "Supported platforms are iOS 16+, macOS 13+ and Android API 28+ (library minSdk 23). There is no web, Windows or Linux implementation. Security keys (YubiKey) and conditional UI / autofill are not supported.",
+    "Since 0.1.0, `createRegistrationOptionsFromJson` / `createAuthenticationOptionsFromJson` do not inject defaults: `timeout`, `userVerification`, `authenticatorSelection` and credential `transports` stay null when the server omits them. Null-check those fields.",
+    "Do not edit generated files (`messages.g.dart`, `Messages.kt`, `Messages.swift`); they come from `lib/pigeons/messages.dart` via Pigeon."
+  ],
+  "previousVersions": [
+    {
+      "tag": "v0.0.7",
+      "title": "0.0.7"
+    }
+  ]
+}

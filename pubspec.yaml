@@ -1,6 +1,12 @@
 name: flutter_passkey_service
-description: "A comprehensive Flutter plugin for seamless Passkey (WebAuthn) integration on iOS, macOS, and Android. Enable passwordless authentication with biometric security."
+description: "Passkey (WebAuthn / FIDO2) registration and passwordless sign-in for Flutter on iOS, macOS and Android, with PRF and largeBlob extension support."
 version: 0.1.0
+topics:
+  - passkey
+  - webauthn
+  - fido2
+  - authentication
+  - biometrics
 homepage: https://github.com/minhtri1401/flutter_passkey_service
 repository: https://github.com/minhtri1401/flutter_passkey_service
 issue_tracker: https://github.com/minhtri1401/flutter_passkey_service/issues

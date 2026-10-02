@@ -1,0 +1,34 @@
+# flutter_passkey_service
+
+> Flutter plugin for passkey (WebAuthn / FIDO2) registration and sign-in on iOS 16+, macOS 13+ and Android API 28+. It wraps Apple AuthenticationServices and Android Credential Manager behind one type-safe Dart API, works with any WebAuthn server, and supports the PRF (key derivation) and largeBlob WebAuthn extensions. MIT licensed. Package name on pub.dev: `flutter_passkey_service`.
+
+Public API (all static on `FlutterPasskeyService`): `register`, `authenticate`, `createRegistrationOptions`, `createAuthenticationOptions`, `createRegistrationOptionsFromJson`, `createAuthenticationOptionsFromJson`, `createRegistrationOptionsFromJsonString`, `createAuthenticationOptionsFromJsonString`. Errors surface as `PasskeyException` with a typed `PasskeyErrorType` enum. Not supported: Flutter web, Windows, Linux, hardware security keys, conditional UI / passkey autofill.
+
+## Documentation
+
+- [README](https://github.com/minhtri1401/flutter_passkey_service/blob/main/README.md): installation, domain verification, registration and authentication flows, PRF and largeBlob usage, FAQ, comparison with alternatives
+- [API reference (pub.dev)](https://pub.dev/documentation/flutter_passkey_service/latest/): generated Dart API docs for every class and method
+- [Error reference](https://github.com/minhtri1401/flutter_passkey_service/blob/main/doc/guides/error-reference.md): every `PasskeyErrorType` value, which platform raises it, and what to do
+- [Server integration guide](https://github.com/minhtri1401/flutter_passkey_service/blob/main/doc/guides/server-integration.md): JSON shapes exchanged with a WebAuthn relying-party server, base64url rules, user handle handling
+- [Troubleshooting](https://github.com/minhtri1401/flutter_passkey_service/blob/main/doc/guides/troubleshooting.md): domain association failures, "no credentials", simulator and emulator limits, macOS entitlements
+- [CHANGELOG](https://github.com/minhtri1401/flutter_passkey_service/blob/main/CHANGELOG.md): release notes including the 0.1.0 breaking changes and migration steps
+
+## Examples
+
+- [Example app](https://github.com/minhtri1401/flutter_passkey_service/blob/main/example/lib/passkey_example.dart): registration, authentication, server JSON and PRF key derivation in one Flutter screen
+- [PRF / KEK article](https://github.com/minhtri1401/flutter_passkey_service/blob/main/kek_feature_article.md): deriving a symmetric Key Encryption Key from a passkey for local encryption
+- [largeBlob article](https://github.com/minhtri1401/flutter_passkey_service/blob/main/large_blob_article.md): storing up to 1 KB of data on the passkey itself
+
+## Source
+
+- [Dart API](https://github.com/minhtri1401/flutter_passkey_service/blob/main/lib/flutter_passkey_service.dart): the static API surface and JSON helpers
+- [Data models (Pigeon source)](https://github.com/minhtri1401/flutter_passkey_service/blob/main/lib/pigeons/messages.dart): every request, response and extension model plus `PasskeyErrorType`
+- [iOS/macOS error mapping](https://github.com/minhtri1401/flutter_passkey_service/blob/main/darwin/flutter_passkey_service/Sources/flutter_passkey_service/PasskeyErrorMapping.swift)
+- [Android error mapping](https://github.com/minhtri1401/flutter_passkey_service/blob/main/android/src/main/kotlin/com/example/flutter_passkey_service/PasskeyExceptionHandler.kt)
+
+## Optional
+
+- [llms-full.txt](https://github.com/minhtri1401/flutter_passkey_service/blob/main/llms-full.txt): the README, guides and changelog concatenated into one file for a single-fetch context
+- [pub.dev package page](https://pub.dev/packages/flutter_passkey_service): versions, scores, platform badges
+- [GitHub issues](https://github.com/minhtri1401/flutter_passkey_service/issues): bug reports and feature requests
+- [Passwordless login with passkeys in Flutter (dev.to)](https://dev.to/tri_dev_dhm/unlock-the-future-of-authentication-a-guide-to-passwordless-login-with-passkey-516b): conceptual walkthrough by the maintainer
